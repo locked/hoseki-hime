@@ -1,6 +1,13 @@
-#hs_main {
+#hs_main, #hs_canvas {
 	width:800px;
 	height:600px;
+	position:relative;
+}
+#hs_canvas {
+	top:0px;
+	left:0px;
+	position:absolute;
+	/*border:1px solid red;*/
 }
 #hs_left, #hs_right {
 	width:150px;
@@ -23,7 +30,7 @@
 }
 
 #debug {
-	height:300px;
+	height:340px;
 	width:140px;
 	margin:4px;
 	border:1px solid gray;

@@ -32,8 +32,8 @@ var Point = $.inherit({
 	ctx.lineWidth = 1;
 	ctx.lineCap = 'square';
 	ctx.strokeStyle = 'rgba(255,255,255,1)';
-	var locx = this.x;
-	var locy = this.y;
+	var locx = this.x+game.origin.x;
+	var locy = this.y+game.origin.y;
 	ctx.moveTo(locx-0.5, locy-0.5);
 	ctx.lineTo(locx+0.5, locy-0.5);
 	ctx.lineTo(locx+0.5, locy+0.5);
@@ -58,7 +58,7 @@ var Obj = $.inherit( Point, {
     return "obj";
   },
   render : function( ctx ) {
-	ctx.drawImage( this.img, Math.floor(this.x-this.w/2), Math.floor(this.y-this.h/2), this.w, this.h );
+	ctx.drawImage( this.img, Math.floor(this.x-this.w/2)+game.origin.x, Math.floor(this.y-this.h/2)+game.origin.y, this.w, this.h );
 	if( this.ind ) {
 		ctx.fillStyle = "#fff";
 		ctx.font = 'arial 5px';
@@ -70,8 +70,8 @@ var Obj = $.inherit( Point, {
 
 var Cursor = $.inherit( Point, {
   doAnim: function( game ){
-    this.x = game.mouse.x;
-    this.y = game.mouse.y;
+    this.x = game.mouse.x - game.origin.x;
+    this.y = game.mouse.y - game.origin.y;
   },
 
   role : function(){
@@ -94,22 +94,31 @@ var LSGame = $.inherit({
 // function LSGame( canvas ) {
   __constructor : function( canvas ) {
 	//this.canvas = canvas;
-	this.ctx = document.getElementById( canvas ).getContext('2d');
+	this.ctx = document.getElementById( "hs_canvas" ).getContext('2d');
 	this.logs = [];
+	this.origin = new Point( 152, 10 );
 	// Game objects
 	this.objs = [];
 	this.explosions = [];
 	this.cursor = new Cursor();
 	this.mouse = new Point();
 	
-	//$('#'+canvas).mousedown(function(e) {
-	//	game.debug( "CLICK" );
-	//});
-	$('#'+canvas).mousemove(function(e) {
-		game.mouse.x = e.pageX - this.offsetLeft;
-		game.mouse.y = e.pageY - this.offsetTop;
+	$('#hs_canvas').mousemove(function(e) {
+		game.mouse.x = e.pageX - $(this).parent().get(0).offsetLeft;
+		game.mouse.y = e.pageY - $(this).parent().get(0).offsetTop;
 		//game.debug( game.mouse.info() );
 	});
+	$("#hs_canvas").bind( "click", {o:this}, this.click );
+  },
+  click : function( e ) {
+	o = e.data.o;
+	if( o.state=="play" ) {
+		$("#hs_canvas").trigger( "click_in_play" );
+	} else if( o.state=="loose" ) {
+		o.initLevel();
+	} else if( o.state=="win" ) {
+		o.initLevel();
+	}
   },
   delObj : function( obj ) {
 	//for( var id in this.objs ) {
@@ -120,6 +129,7 @@ var LSGame = $.inherit({
 			//game.debug( "delObj: "+obj.obj_id+" ind:"+this.objs[obj.obj_id].ind+" l:"+len+"/"+this.objs.length );
 		//}
 	//}
+	return true;
   },
   addObj : function( obj ) {
 	obj.img = preloadImage( obj.img_name );
@@ -128,6 +138,7 @@ var LSGame = $.inherit({
 	//if( this.objs[obj.obj_id] )
 	//	debug( "addObj: "+obj.obj_id+" ind:"+this.objs[obj.obj_id].ind+" id:"+this.objs[obj.obj_id].obj_id );
 	//this.objs[id].img = preloadImage( "/media/himesama/img/"+this.objs[id].img_name );
+	return true;
   },
   init : function() {
 	//for( var id in this.objs ) {
@@ -141,6 +152,9 @@ var LSGame = $.inherit({
 	setInterval( drawAll, 40 );
   },
   drawBack : function( ctx ) {
+	ctx.fillStyle = "#fff";
+	ctx.font = '14px Arial';
+	ctx.fillText( "lives: "+this.lives, 50, 310 );
   },
   debug : function( txt ) {
     debug( txt );
@@ -149,14 +163,13 @@ var LSGame = $.inherit({
  * Animation loop
  */
   drawAll : function() {
-	ctx = this.ctx; //var ctx = document.getElementById('hs_board').getContext('2d');
-	//var ctx = document.getElementById('hs_board').getContext('2d');
-	ctx.clearRect(0,0,630,580);
+	ctx = this.ctx;
+	ctx.clearRect(0,0,800,600);
 	ctx.save();
 	
-	ctx.fillStyle = "#fff";
-	ctx.font = 'arial 6px';
+	this.drawBack( ctx );
 	
+	if( this.state=="play" ) {
 	for( var id in this.objs ) {
 		this.objs[id].doAnim( game );
 	}
@@ -166,14 +179,20 @@ var LSGame = $.inherit({
 	}
 	this.cursor.doAnim( game );
 	
-	this.drawBack( ctx );
-	
 	for( var id in this.objs ) {
 		this.objs[id].render( ctx );
 	}
 
 	for( var id in this.explosions ) {
 		this.explosions[id].render( ctx );
+	}
+	}
+	else if( this.state=="loose" ) {
+		ctx.font = '16px Arial';
+		ctx.fillText( "You loose, click to continue", 300, 200 );
+	} else if( this.state=="win" ) {
+		ctx.font = '16px Arial';
+		ctx.fillText( "You win, click to go to next level", 300, 200 );
 	}
 	
 	this.cursor.render( ctx );
@@ -186,7 +205,9 @@ var LSGame = $.inherit({
 		frame = 0;
 		//debug( fps );
 	}
-	ctx.fillText( fps, 30, 30 );
+	ctx.fillStyle = "#fff";
+	ctx.font = '14px Arial';
+	ctx.fillText( fps+" fps", 10, 360 );
 	
 	ctx.restore();
   }
