@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block css %}
+  <link rel="stylesheet" href="{{ MEDIA_URL }}himesama/css/game.css" />
+{% endblock %}
+
+
+{% block "content" %}
+<div id="hs_main">
+<div id="hs_left">
+ <div id="debug">
+ </div>
+</div>
+<div id="hs_right">
+ <canvas id="hs_board" width="630" height="580">
+ </canvas>
+</div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+  <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/jquery.inherit-1.3.0.js"></script>
+  <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/libcanvas.js"></script>
+  <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/game.js"></script>
+{% endblock %}

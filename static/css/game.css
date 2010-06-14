@@ -1,0 +1,34 @@
+#hs_main {
+	width:800px;
+	height:600px;
+}
+#hs_left, #hs_right {
+	width:150px;
+	height:600px;
+	float:left;
+	margin:0px;
+}
+#hs_left {
+	background-image:url('../img/background_left.jpg');
+}
+#hs_right {
+	width:650px;
+	background-image:url('../img/background05.jpg');
+}
+#hs_board {
+	width:630px;
+	height:580px;
+	margin:9px;
+	border:1px solid gray;
+}
+
+#debug {
+	height:300px;
+	width:140px;
+	margin:4px;
+	border:1px solid gray;
+	overflow:auto;
+	color:white;
+	/*background-color:black;*/
+}
+
