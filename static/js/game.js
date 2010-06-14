@@ -105,15 +105,78 @@ var Gun = $.inherit( Obj, {
 
 
 
-var AnimatedObj = $.inherit( Obj, {
+//
+// Abstract class for all object belonging to the level
+//
+var LevelObj = $.inherit( Obj, {
+	__constructor : function( p, img_name ){
+		this.__base( p, img_name );
+	},
+  addNewNeighbour : function( count, color ) {
+    if( count>0 ) {
+       var c = this.getNeighbour();
+       for( i in c ) {
+          if( c[i] ) {
+             var lvl = game.getLevel();
+             if( lvl[c[i][0]]==null ) {
+		/*
+		// Alternative method to check if already added
+		for( j in game.objs ) {
+			if( game.objs[j].ind==c[i][0] )
+				break;
+		}
+		if( game.objs[j].ind==c[i][0] )	// already exists
+			continue;
+		*/
+		var p = game.getPosition( c[i][0] );
+                var o = new Coin( p, null, color );
+                if( game.addObj( o ) ) {
+                   game.level[c[i][0]] = o;
+                   //game.debug( "add id:"+c[i][0]+ " x:"+Math.round(p.x)+" y:"+Math.round(p.y)+" c:"+count );
+                   o.addNewNeighbour( count-1, color );
+                }
+             //} else {
+             //   c[i][1].color = this.color;
+             }
+          }
+       }
+    }
+  },
+  getNeighbour : function() {
+		var lvl = game.getLevel();
+		var c = [];
+		var yind = Math.round( (this.y-game.coin_h/2)/(game.coin_h*0.5) );
+		if( yind%2==1 ) coef = 0;
+		else coef = 1;
+    if( this.ind>game.x_coins+1 ) c.push( [this.ind-game.x_coins-1+coef, lvl[this.ind-game.x_coins-1+coef]] );
+    if( this.ind>game.x_coins*2 ) c.push( [this.ind-game.x_coins*2, lvl[this.ind-game.x_coins*2]] );
+    if( this.ind>game.x_coins && this.ind%18>0 ) c.push( [this.ind-game.x_coins+coef, lvl[this.ind-game.x_coins+coef]] );
+    
+    if( this.ind<game.max_coins+game.x_coins-1 ) c.push( [this.ind+game.x_coins-1+coef, lvl[this.ind+game.x_coins-1+coef]] );
+    if( this.ind<game.max_coins+game.x_coins*2 ) c.push( [this.ind+game.x_coins*2, lvl[this.ind+game.x_coins*2]] );
+    if( this.ind<game.max_coins+game.x_coins ) c.push( [this.ind+game.x_coins+coef, lvl[this.ind+game.x_coins+coef]] );
+    /*
+    for( i in c )
+      if( c[i] )
+         game.debug( "ind: "+this.ind+" neighbour:"+c[i][0] );
+    */
+		return c;
+  },
+});
+
+
+
+
+//
+// Abstract class for animated object in level
+//
+var AnimatedObj = $.inherit( LevelObj, {
 	__constructor : function( p, img_name, max_frame ){
 		this.__base( p, img_name );
-		this.frame = 0;
-		this.max_frame = max_frame;
 		this.w = 25;
 		this.h = 25;
-		if( game )
-			this.ind = game.getIndex( this );
+		this.frame = 0;
+		this.max_frame = max_frame;
 	},
 	doAnim : function() {
 		this.frame += 0.2;
@@ -126,9 +189,36 @@ var AnimatedObj = $.inherit( Obj, {
 });
 
 
+// Breakable stone
 var Breakable = $.inherit( AnimatedObj, {
 	__constructor : function( p ){
 		this.__base( p, "breakable.png", 5 );
+	},
+	collide : function( color ) {
+		game.delObj( this );
+	}
+});
+
+
+// Unbreakable stone
+var Unbreakable = $.inherit( AnimatedObj, {
+	__constructor : function( p ){
+		this.__base( p, "wall.png", 5 );
+		this.w = 25;
+		this.h = 23;
+	},
+	collide : function( color ) {
+		this.addNewNeighbour( 2, color );
+	}
+});
+
+
+var Wall = $.inherit( LevelObj, {
+	__constructor : function( p ){
+		var img_name = "stone"+rand(1,5)+".png";
+		this.__base( p, img_name, 0 );
+		this.w = 23;
+		this.h = 23;
 	},
 	collide : function( color ) {
 		game.delObj( this );
@@ -150,11 +240,9 @@ var Gold = $.inherit( AnimatedObj, {
 
 
 
-var Hime = $.inherit( Obj, {
+var Hime = $.inherit( LevelObj, {
 	__constructor : function( p ){
-		//this.__base( p, null, 1, "hime" );
-		this.x = p.x;
-		this.y = p.y;
+		this.__base( p, "hime.png" );
 		this.w = 57;
 		this.h = 67;
 		this.frame = 0;
@@ -162,10 +250,6 @@ var Hime = $.inherit( Obj, {
 		this.animation_freq = Math.floor(Math.random()*60)+30;
 		this.max_frame = 11;
 		this.role = "hime";
-		this.img_name = "hime.png";
-		if( game ) {
-			this.ind = game.getIndex( this );
-		}
 	},
 	collide : function( color ) {
 		var lvl = game.getLevel();
@@ -205,23 +289,17 @@ var Hime = $.inherit( Obj, {
 
 
 
-var CoinObj = $.inherit( Obj, {
+var CoinObj = $.inherit( LevelObj, {
   __constructor : function( p, v, color, role ){
-    this.x = p.x;
-    this.y = p.y;
-    this.v = v;
-    this.w = 25;
-    this.h = 23;
+	if( !( color>0 && color<6 ) )
+		color = 1;
+	this.__base( p, "el"+color+".png" );
+	this.w = 25;
+	this.h = 23;
+	this.v = v;
     this.color = color;
     this.role = role;
     this.obj_id = 0;
-    if( color>0 && color<6 )
-      this.img_name = "el"+color+".png";
-    else
-      this.img_name = "el1.png";
-    if( game ) {
-	this.ind = game.getIndex( this );
-    }
   },
   doAnim : function( game ){
     if( this.v!=null ) {
@@ -252,26 +330,6 @@ var CoinObj = $.inherit( Obj, {
 		lvl[this.ind].collide( this.color );
 	}
   },
-  getNeighbour : function() {
-		var lvl = game.getLevel();
-		var c = [];
-		var yind = Math.round( (this.y-game.coin_h/2)/(game.coin_h*0.5) );
-		if( yind%2==1 ) coef = 0;
-		else coef = 1;
-    if( this.ind>game.x_coins+1 ) c.push( [this.ind-game.x_coins-1+coef, lvl[this.ind-game.x_coins-1+coef]] );
-    if( this.ind>game.x_coins*2 ) c.push( [this.ind-game.x_coins*2, lvl[this.ind-game.x_coins*2]] );
-    if( this.ind>game.x_coins && this.ind%18>0 ) c.push( [this.ind-game.x_coins+coef, lvl[this.ind-game.x_coins+coef]] );
-    
-    if( this.ind<game.max_coins+game.x_coins-1 ) c.push( [this.ind+game.x_coins-1+coef, lvl[this.ind+game.x_coins-1+coef]] );
-    if( this.ind<game.max_coins+game.x_coins*2 ) c.push( [this.ind+game.x_coins*2, lvl[this.ind+game.x_coins*2]] );
-    if( this.ind<game.max_coins+game.x_coins ) c.push( [this.ind+game.x_coins+coef, lvl[this.ind+game.x_coins+coef]] );
-    /*
-    for( i in c )
-      if( c[i] )
-         game.debug( "ind: "+this.ind+" neighbour:"+c[i][0] );
-    */
-		return c;
-  },
   collide : function( color ) {
 	if( this.color==color ) {
         	//game.debug( "this.destroyNeighbour ind:"+this.obj_id );
@@ -293,36 +351,6 @@ var CoinObj = $.inherit( Obj, {
              c[i][1].destroyNeighbour();
     }
 	game.score += 10;
-  },
-  addNewNeighbour : function( count, color ) {
-    if( count>0 ) {
-       var c = this.getNeighbour();
-       for( i in c ) {
-          if( c[i] ) {
-             var lvl = game.getLevel();
-             if( lvl[c[i][0]]==null ) {
-		/*
-		// Alternative method to check if already added
-		for( j in game.objs ) {
-			if( game.objs[j].ind==c[i][0] )
-				break;
-		}
-		if( game.objs[j].ind==c[i][0] )	// already exists
-			continue;
-		*/
-		var p = game.getPosition( c[i][0] );
-                var o = new Coin( p, null, color );
-                if( game.addObj( o ) ) {
-                   game.level[c[i][0]] = o;
-                   //game.debug( "add id:"+c[i][0]+ " x:"+Math.round(p.x)+" y:"+Math.round(p.y)+" c:"+count );
-                   o.addNewNeighbour( count-1, color );
-                }
-             //} else {
-             //   c[i][1].color = this.color;
-             }
-          }
-       }
-    }
   },
   role : function(){
     return this.role;
@@ -422,8 +450,12 @@ var HSGame = $.inherit( LSGame, {
 				c = new Coin( this.getPosition( id ), null, t );
 			} else if( t==10 ) {
 				c = new Breakable( this.getPosition( id ) );
+			} else if( t==11 ) {
+				c = new Wall( this.getPosition( id ) );
 			} else if( t==20 ) {
 				c = new Gold( this.getPosition( id ) );
+			} else if( t==30 ) {
+				c = new Unbreakable( this.getPosition( id ) );
 			} else if( t==50 ) {
 				c = new Hime( this.getPosition( id ) );
 			}
@@ -444,6 +476,7 @@ var HSGame = $.inherit( LSGame, {
 			game.loose();
 			return false;
 		}
+		obj.ind = this.getIndex( obj );
 		return this.__base( obj );
 	},
 	delObj : function( obj ) {
@@ -489,6 +522,12 @@ $(document).ready( function() {
 	snds['win'] = preloadSound( "win.ogg" );
 	snds['loose'] = preloadSound( "loose.ogg" );
 	snds['free'] = preloadSound( "dropgood.ogg" );
+	preloadImage( "wall.png" );
+	preloadImage( "stone1.png" );
+	preloadImage( "stone2.png" );
+	preloadImage( "stone3.png" );
+	preloadImage( "stone4.png" );
+	preloadImage( "stone5.png" );
 	preloadImage( "hime.png" );
 	preloadImage( "coin.png" );
 	preloadImage( "breakable.png" );
@@ -504,7 +543,7 @@ $(document).ready( function() {
           3, 1, 2,  2,  1,  1, 3, 3, 3, 4,  4, 5, 5, 5,  4,  1, 1,
           1, 1, 2, 50,  1,  1, 3, 3, 3, 4,  4, 5, 5, 5, 50,  0, 1,
           1, 1, 2,  2,  1,  1, 0, 0, 0, 4,  4, 5, 5, 5,  3,  2, 0,
-          1, 1, 2, 10, 20,  1, 0, 0, 0, 4,  4, 5, 5, 5, 20,  0, 0,
+          1, 1, 2, 10, 20, 30, 0, 0, 0, 4,  4, 5, 5, 5, 11,  0, 0,
           1, 1, 2,  2,  1,  1, 3, 3, 3, 0,  0, 0, 5, 5,  0,  0, 0,
 	],
 	[ 0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
@@ -524,14 +563,3 @@ $(document).ready( function() {
 	game.initLevel();
 } );
 
-
-function getAngle( p1, p2 ) {
-	alpha = Math.atan( (p1.y - p2.y) / (p1.x - p2.x) );
-	return alpha;
-}
-function getAdjacent( a, h ) {
-	return Math.cos( a )*h;
-}
-function getOppose( a, h ) {
-	return Math.sin( a )*h;
-}
