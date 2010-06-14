@@ -105,6 +105,42 @@ var Gun = $.inherit( Obj, {
 
 
 
+var AnimatedObj = $.inherit( Obj, {
+	__constructor : function( p, img_name, max_frame ){
+		this.__base( p, img_name );
+		this.frame = 0;
+		this.max_frame = max_frame;
+		this.w = 25;
+		this.h = 25;
+	},
+	doAnim : function() {
+		this.frame += 0.2;
+		if( this.frame>this.max_frame )
+			this.frame = 0;
+	},
+	render : function( ctx ) {
+		ctx.drawImage( this.img,  Math.floor(this.frame)*this.w, 0, this.w, this.h,  Math.floor(this.x-this.w/2)+game.origin.x, Math.floor(this.y-this.h/2)+game.origin.y, this.w, this.h );
+	}
+});
+
+
+var Breakable = $.inherit( AnimatedObj, {
+	__constructor : function( p ){
+		this.__base( p, "breakable.png", 5 );
+	}
+});
+
+
+var Gold = $.inherit( AnimatedObj, {
+	__constructor : function( p ){
+		this.__base( p, "coin.png", 28 );
+		this.w = 23;
+		this.h = 23;
+	}
+});
+
+
+
 var Hime = $.inherit( Obj, {
 	__constructor : function( p ){
 		//this.__base( p, null, 1, "hime" );
@@ -123,7 +159,6 @@ var Hime = $.inherit( Obj, {
 		}
 	},
 	collide : function( color ) {
-		snds['free'].play();
 		var lvl = game.getLevel();
 		var hime_count = 0;
                 game.level[this.ind] = null;
@@ -136,7 +171,8 @@ var Hime = $.inherit( Obj, {
 			//alert( hime_count );
 			snds['win'].play();
 			game.win();
-		}
+		} else
+			snds['free'].play();
 	},
 	doAnim : function( ctx ) {
 		this.animation++;
@@ -374,6 +410,10 @@ var HSGame = $.inherit( LSGame, {
 			var c = null;
 			if( t>0 && t<6 ) {
 				c = new Coin( this.getPosition( id ), null, t );
+			} else if( t==10 ) {
+				c = new Breakable( this.getPosition( id ) );
+			} else if( t==20 ) {
+				c = new Gold( this.getPosition( id ) );
 			} else if( t==50 ) {
 				c = new Hime( this.getPosition( id ) );
 			}
@@ -437,6 +477,8 @@ $(document).ready( function() {
 	snds['loose'] = preloadSound( "loose.ogg" );
 	snds['free'] = preloadSound( "dropgood.ogg" );
 	preloadImage( "hime.png" );
+	preloadImage( "coin.png" );
+	preloadImage( "breakable.png" );
 	preloadImage( "el1.png" );
 	preloadImage( "el2.png" );
 	preloadImage( "el3.png" );
@@ -449,7 +491,7 @@ $(document).ready( function() {
           3, 1, 2,  2,  1,  1, 3, 3, 3, 4,  4, 5, 5, 5,  4,  1, 1,
           1, 1, 2, 50,  1,  1, 3, 3, 3, 4,  4, 5, 5, 5, 50,  0, 1,
           1, 1, 2,  2,  1,  1, 0, 0, 0, 4,  4, 5, 5, 5,  3,  2, 0,
-          1, 1, 2,  2,  1,  1, 0, 0, 0, 4,  4, 5, 5, 5,  5,  0, 0,
+          1, 1, 2, 10, 20,  1, 0, 0, 0, 4,  4, 5, 5, 5, 20,  0, 0,
           1, 1, 2,  2,  1,  1, 3, 3, 3, 0,  0, 0, 5, 5,  0,  0, 0,
 	],
 	[ 0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,

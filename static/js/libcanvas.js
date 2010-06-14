@@ -68,9 +68,9 @@ var Point = $.inherit({
 
 
 var Obj = $.inherit( Point, {
-  __constructor : function( x, y, img_name ){
-	this.x = x;
-	this.y = y;
+  __constructor : function( p, img_name ){
+	this.x = p.x;
+	this.y = p.y;
 	this.img_name = img_name;
   },
   role : function(){
