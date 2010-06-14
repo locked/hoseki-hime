@@ -20,13 +20,6 @@
 var snds = {};
 var game = null;
 
-function addAllSounds() {
-	var all = [];
-	all.push( "win.ogg" );
-	for( var iii in all ) {
-		preloadSound( all[iii] );
-	}
-}
 
 var Gun = $.inherit( Obj, {
   __constructor : function( game ){
@@ -319,8 +312,10 @@ var CoinObj = $.inherit( LevelObj, {
       if( this.y-this.h/2<0 ) {
         this.v.y = -this.v.y;
       }
+	this.lastind = this.ind;
       this.ind = game.getIndex( this );
-      this.checkCollisions( game );
+	if( this.lastind!=this.ind )
+           this.checkCollisions( game );
     }
   },
   checkCollisions : function( game ) {
@@ -519,23 +514,23 @@ var HSGame = $.inherit( LSGame, {
 
 $(document).ready( function() {
 	game = new HSGame( 'hs_board' );
-	snds['win'] = preloadSound( "win.ogg" );
-	snds['loose'] = preloadSound( "loose.ogg" );
-	snds['free'] = preloadSound( "dropgood.ogg" );
-	preloadImage( "wall.png" );
-	preloadImage( "stone1.png" );
-	preloadImage( "stone2.png" );
-	preloadImage( "stone3.png" );
-	preloadImage( "stone4.png" );
-	preloadImage( "stone5.png" );
-	preloadImage( "hime.png" );
-	preloadImage( "coin.png" );
-	preloadImage( "breakable.png" );
-	preloadImage( "el1.png" );
-	preloadImage( "el2.png" );
-	preloadImage( "el3.png" );
-	preloadImage( "el4.png" );
-	preloadImage( "el5.png" );
+	snds['win'] = game.preloadSound( "win.ogg" );
+	snds['loose'] = game.preloadSound( "loose.ogg" );
+	snds['free'] = game.preloadSound( "dropgood.ogg" );
+	game.preloadImage( "wall.png" );
+	game.preloadImage( "stone1.png" );
+	game.preloadImage( "stone2.png" );
+	game.preloadImage( "stone3.png" );
+	game.preloadImage( "stone4.png" );
+	game.preloadImage( "stone5.png" );
+	game.preloadImage( "hime.png" );
+	game.preloadImage( "coin.png" );
+	game.preloadImage( "breakable.png" );
+	game.preloadImage( "el1.png" );
+	game.preloadImage( "el2.png" );
+	game.preloadImage( "el3.png" );
+	game.preloadImage( "el4.png" );
+	game.preloadImage( "el5.png" );
 	game.levels = [
 	[ 4, 0, 0,  0,  0,  0, 0, 0, 0, 1,  0, 0, 0, 0,  0,  0, 1,
           0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
