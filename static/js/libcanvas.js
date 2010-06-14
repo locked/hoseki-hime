@@ -129,25 +129,14 @@ var LSGame = $.inherit({
 	});
 	$("#hs_canvas").bind( "click", {o:this}, this.click );
   },
+  drawScreen : function() {
+  },
   click : function( e ) {
-	o = e.data.o;
-	if( o.state=="play" ) {
-		$("#hs_canvas").trigger( "click_in_play" );
-	} else if( o.state=="loose" ) {
-		o.initLevel();
-	} else if( o.state=="win" ) {
-		o.initLevel();
-	}
   },
   delObj : function( obj ) {
-	//for( var id in this.objs ) {
-	//	if( this.objs[id]==obj.obj_id ) {
-			//this.objs.splice(obj.obj_id, 1);
-			delete this.objs[obj.obj_id];
-			//game.debug( "delObj: "+obj.obj_id+" ind:"+todelete.ind+" del:"+deleted.ind );
-			//game.debug( "delObj: "+obj.obj_id+" ind:"+this.objs[obj.obj_id].ind+" l:"+len+"/"+this.objs.length );
-		//}
-	//}
+	delete this.objs[obj.obj_id];
+	//this.objs.splice(obj.obj_id, 1);
+	//game.debug( "delObj: "+obj.obj_id+" ind:"+this.objs[obj.obj_id].ind+" l:"+len+"/"+this.objs.length );
 	return true;
   },
   addObj : function( obj ) {
@@ -160,28 +149,28 @@ var LSGame = $.inherit({
 	return true;
   },
   init : function() {
-	//for( var id in this.objs ) {
-	//}
-	//preloadImage( "/media/himesama/img/load_leaf.png" );
-	//preloadImage( "/media/himesama/img/gun_tube.png" );
+	// Start loading
 	loadImages();
 	loadSounds();
   },
   start : function() {
+	// Start loop, at around 24 FPS
 	setInterval( drawAll, 40 );
   },
   drawBack : function( ctx ) {
+	// Draw scores, lives, etc...
 	ctx.fillStyle = "#fff";
 	ctx.font = '14px Arial';
 	ctx.fillText( "lives: "+this.lives, 50, 310 );
   },
   debug : function( txt ) {
-    debug( txt );
+	// Call an external debug functional for the sake of simplicity
+	debug( txt );
   },
-/**
- * Animation loop
- */
   drawAll : function() {
+	/**
+	 * Animation loop
+	 */
 	ctx = this.ctx;
 	ctx.clearRect(0,0,800,600);
 	ctx.save();
@@ -189,29 +178,26 @@ var LSGame = $.inherit({
 	this.drawBack( ctx );
 	
 	if( this.state=="play" ) {
-	for( var id in this.objs ) {
-		this.objs[id].doAnim( game );
-	}
+		for( var id in this.objs ) {
+			this.objs[id].doAnim( game );
+		}
+		/*
+		for( var id in this.explosions ) {
+			this.explosions[id].doAnim( game );
+		}
+		*/
+		this.cursor.doAnim( game );
 	
-	for( var id in this.explosions ) {
-		this.explosions[id].doAnim( game );
-	}
-	this.cursor.doAnim( game );
-	
-	for( var id in this.objs ) {
-		this.objs[id].render( ctx );
-	}
-
-	for( var id in this.explosions ) {
-		this.explosions[id].render( ctx );
-	}
-	}
-	else if( this.state=="loose" ) {
-		ctx.font = '16px Arial';
-		ctx.fillText( "You loose, click to continue", 300, 200 );
-	} else if( this.state=="win" ) {
-		ctx.font = '16px Arial';
-		ctx.fillText( "You win, click to go to next level", 300, 200 );
+		for( var id in this.objs ) {
+			this.objs[id].render( ctx );
+		}
+		/*
+		for( var id in this.explosions ) {
+			this.explosions[id].render( ctx );
+		}
+		*/
+	} else {
+		this.drawScreen();
 	}
 	
 	this.cursor.render( ctx );

@@ -123,6 +123,7 @@ var Hime = $.inherit( Obj, {
 		}
 	},
 	collide : function( color ) {
+		snds['free'].play();
 		var lvl = game.getLevel();
 		var hime_count = 0;
                 game.level[this.ind] = null;
@@ -130,10 +131,10 @@ var Hime = $.inherit( Obj, {
 			if( lvl[id] && lvl[id].role=="hime" )
 				hime_count++;
 		}
-		snds['win'].play();
 		game.delObj( this );
 		if( hime_count==0 ) {
 			//alert( hime_count );
+			snds['win'].play();
 			game.win();
 		}
 	},
@@ -314,14 +315,40 @@ var HSGame = $.inherit( LSGame, {
 		this.score = 0;
 		this.state = "init";
 	},
+	drawScreen : function() {
+		ctx.font = '16px Arial';
+		if( this.state=="loose" ) {
+			ctx.fillText( "You loose, click to continue", 300, 200 );
+		} else if( this.state=="loose_real" ) {
+			ctx.fillText( "You loose. Back to level 1", 300, 200 );
+		} else if( this.state=="win" ) {
+			ctx.fillText( "You win, click to go to next level", 300, 200 );
+		}
+	},
+	click : function( e ) {
+		var o = e.data.o;	// o is 'this' object, passed as argument because it's an event callback
+		if( o.state=="play" ) {
+			// Trigger a custom event
+			$("#hs_canvas").trigger( "click_in_play" );
+		} else {
+			// Special screens
+			if( o.state=="loose" || o.state=="loose_real" || o.state=="win" ) {
+				o.initLevel();
+			}
+		}
+	},
 	loose : function() {
 		// Loose
-		if( this.state!="loose" ) {
-			this.state = "loose";
+		if( this.state=="play" ) {
+			snds['loose'].play();
 			this.lives -= 1;
-			if( this.lives<0 ) {
-				alert( "You loose. Back to level 1" );
+			if( this.lives<=0 ) {
+				//alert( "You loose. Back to level 1" );
+				this.state = "loose_real";
 				this.current_level = 0;
+				this.lives = 3;
+			} else {
+				this.state = "loose";
 			}
 		}
 	},
@@ -407,6 +434,8 @@ var HSGame = $.inherit( LSGame, {
 $(document).ready( function() {
 	game = new HSGame( 'hs_board' );
 	snds['win'] = preloadSound( "win.ogg" );
+	snds['loose'] = preloadSound( "loose.ogg" );
+	snds['free'] = preloadSound( "dropgood.ogg" );
 	preloadImage( "hime.png" );
 	preloadImage( "el1.png" );
 	preloadImage( "el2.png" );
