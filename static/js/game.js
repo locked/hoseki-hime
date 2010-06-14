@@ -112,6 +112,8 @@ var AnimatedObj = $.inherit( Obj, {
 		this.max_frame = max_frame;
 		this.w = 25;
 		this.h = 25;
+		if( game )
+			this.ind = game.getIndex( this );
 	},
 	doAnim : function() {
 		this.frame += 0.2;
@@ -127,6 +129,9 @@ var AnimatedObj = $.inherit( Obj, {
 var Breakable = $.inherit( AnimatedObj, {
 	__constructor : function( p ){
 		this.__base( p, "breakable.png", 5 );
+	},
+	collide : function( color ) {
+		game.delObj( this );
 	}
 });
 
@@ -136,6 +141,10 @@ var Gold = $.inherit( AnimatedObj, {
 		this.__base( p, "coin.png", 28 );
 		this.w = 23;
 		this.h = 23;
+	},
+	collide : function( color ) {
+		game.score += 500;
+		game.delObj( this );
 	}
 });
 
@@ -283,6 +292,7 @@ var CoinObj = $.inherit( Obj, {
           if( c[i][1].color==this.color )
              c[i][1].destroyNeighbour();
     }
+	game.score += 10;
   },
   addNewNeighbour : function( count, color ) {
     if( count>0 ) {
@@ -437,8 +447,11 @@ var HSGame = $.inherit( LSGame, {
 		return this.__base( obj );
 	},
 	delObj : function( obj ) {
-		if( obj && this.level[obj.ind]==obj )
+		if( obj && this.level[obj.ind]==obj ) {
+			//game.debug( "objid:"+obj.obj_id+" level:"+this.level[obj.ind].obj_id );
 			this.level[obj.ind] = null;
+		}
+			//game.debug( "no match: objid:"+obj.obj_id );
 		this.__base( obj );
 	},
 	

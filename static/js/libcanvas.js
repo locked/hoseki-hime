@@ -161,7 +161,8 @@ var LSGame = $.inherit({
 	// Draw scores, lives, etc...
 	ctx.fillStyle = "#fff";
 	ctx.font = '14px Arial';
-	ctx.fillText( "lives: "+this.lives, 50, 310 );
+	ctx.fillText( this.score, 40, 120 );
+	ctx.fillText( this.lives, 65, 310 );
   },
   debug : function( txt ) {
 	// Call an external debug functional for the sake of simplicity
