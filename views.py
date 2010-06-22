@@ -8,10 +8,12 @@ from django.template import RequestContext
 
 def menu(request):
     template = "hs_menu.html"
-    data = {}
-    return render_to_response(template, data, context_instance=RequestContext(request))
+    return render_to_response(template, {}, context_instance=RequestContext(request))
+
+def editor(request, level=0):
+    template = "hs_game.html"
+    return render_to_response(template, {'gamemode':'editor'}, context_instance=RequestContext(request))
 
 def game(request):
     template = "hs_game.html"
-    data = {}
-    return render_to_response(template, data, context_instance=RequestContext(request))
+    return render_to_response(template, {}, context_instance=RequestContext(request))

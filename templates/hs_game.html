@@ -22,6 +22,9 @@
 
 
 {% block scripts %}
+  <script type="text/javascript">
+var gamemode = '{{ gamemode }}';
+  </script>
   <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/jquery.inherit.js"></script>
   <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/libhtml5.js"></script>
   <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/game.js"></script>

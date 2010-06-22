@@ -23,15 +23,15 @@
 	background-image:url('../img/background05.jpg');
 }
 #hs_board {
-	width:630px;
+	width:634px;
 	height:580px;
-	margin:9px;
+	margin:9px 0px 0px 0px;
 	border:1px solid gray;
 }
 
 #debug {
 	height:340px;
-	width:140px;
+	width:130px;
 	margin:4px;
 	border:1px solid gray;
 	overflow:auto;

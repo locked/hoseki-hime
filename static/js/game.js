@@ -22,78 +22,78 @@ var game = null;
 
 
 var Gun = $.inherit( Obj, {
-  __constructor : function( game ){
-    this.x = 315;
-    this.y = 580;
-    this.w = 43;
-    this.h = 151;
-    this.coin = null;
-    this.game = game;
-    this.img_name = "gun_tube.png";
-    this.updateAngle();
-    this.newCoin();
-  },
-  throwCoin: function( e ) {
-	o = e.data.o;
-	var p = new Point( o.x, 570 );
-    angle = getAngle( p, o.game.cursor );
-    if( angle<0 )
-      angle = (getAngle( p, o.game.cursor ) + Math.PI/2);
-    else
-      angle = (getAngle( p, o.game.cursor ) - Math.PI/2);
-	var speed = 10;
-	var decy = getAdjacent( angle, speed );
-	var decx = getOppose( angle, speed );
-	var v = new Point( decx, -decy );
-	o.coin.v = v;
-	o.newCoin();
-  },
-  newCoin: function() {
-	var s = new Point( 315, 500 );
-	var color = Math.floor( Math.random()*5 ) + 1;
-	this.coin = new GunCoin( s, null, color );
-	this.game.addObj( this.coin );
-  	this.updateCoin();
-	$("#hs_canvas").bind( "click_in_play", {o:this}, this.throwCoin );
-  },
-  updateCoin: function() {
-	var s = new Point( 315, 580 );
-	var ss = s;
-	var decy = getAdjacent( this.angle, 105 );
-	var decx = getOppose( this.angle, 105 );
-	ss.x += decx;
-	ss.y -= decy;
-	//this.game.debug( "angle: " + this.angle + "x:" + ss.x + " y:"+ ss.y + " decx:" + decx + " decy:" + decy );
-	this.coin.x = ss.x;
-	this.coin.y = ss.y;
-  },
-  updateAngle : function(){
-    //var p2 = this.game.cursor;
-    //this.angle = getAngle( this.center, p2 )*2 - Math.PI;
-    this.angle = getAngle( this, this.game.cursor );
-    if( this.angle<0 )
-      this.angle = (getAngle( this, this.game.cursor ) + Math.PI/2);
-    else
-      this.angle = (getAngle( this, this.game.cursor ) - Math.PI/2);
-  },
-  doAnim : function( game ){
-	this.updateAngle();
-	this.updateCoin();
-    //game.debug( "angle:" + this.angle.toPrecision(2) + " angle raw:"+ getAngle( this, p2 ).toPrecision(2) );
-  },
-  render : function( ctx ){
-    var a = this.angle;
-    ctx.translate( this.x+game.origin.x, this.y+game.origin.y );
-    //ctx.translate( this.x, this.y );
-    ctx.rotate( a );
-    ctx.drawImage( this.img, -Math.floor(this.w/2), -(this.h-40) );
-    ctx.rotate( -a );
-    ctx.translate( -this.x-game.origin.x, -this.y-game.origin.y );
-    //ctx.translate( -this.x, -this.y );
-  },
-  role : function(){
-    return "gun";
-  }
+	__constructor : function( game ){
+		this.x = 315;
+		this.y = 580;
+		this.w = 43;
+		this.h = 151;
+		this.coin = null;
+		this.game = game;
+		this.img_name = "gun_tube.png";
+		this.updateAngle();
+		this.newCoin();
+	},
+	throwCoin: function( e ) {
+		o = e.data.o;
+		var p = new Point( o.x, 570 );
+		angle = getAngle( p, o.game.cursor );
+		if( angle<0 )
+			angle = (getAngle( p, o.game.cursor ) + Math.PI/2);
+		else
+			angle = (getAngle( p, o.game.cursor ) - Math.PI/2);
+		var speed = 10;
+		var decy = getAdjacent( angle, speed );
+		var decx = getOppose( angle, speed );
+		var v = new Point( decx, -decy );
+		o.coin.v = v;
+		o.newCoin();
+	},
+	newCoin: function() {
+		var s = new Point( 315, 500 );
+		var color = Math.floor( Math.random()*5 ) + 1;
+		this.coin = new GunCoin( s, null, color );
+		this.game.addObj( this.coin );
+		this.updateCoin();
+		$("#hs_canvas").bind( "click_in_play", {o:this}, this.throwCoin );
+	},
+	updateCoin: function() {
+		var s = new Point( 315, 580 );
+		var ss = s;
+		var decy = getAdjacent( this.angle, 105 );
+		var decx = getOppose( this.angle, 105 );
+		ss.x += decx;
+		ss.y -= decy;
+		//this.game.debug( "angle: " + this.angle + "x:" + ss.x + " y:"+ ss.y + " decx:" + decx + " decy:" + decy );
+		this.coin.x = ss.x;
+		this.coin.y = ss.y;
+	},
+	updateAngle : function(){
+		//var p2 = this.game.cursor;
+		//this.angle = getAngle( this.center, p2 )*2 - Math.PI;
+		this.angle = getAngle( this, this.game.cursor );
+		if( this.angle<0 )
+			this.angle = (getAngle( this, this.game.cursor ) + Math.PI/2);
+		else
+			this.angle = (getAngle( this, this.game.cursor ) - Math.PI/2);
+	},
+	doAnim : function( game ){
+		this.updateAngle();
+		this.updateCoin();
+		//game.debug( "angle:" + this.angle.toPrecision(2) + " angle raw:"+ getAngle( this, p2 ).toPrecision(2) );
+	},
+	render : function( ctx ){
+		var a = this.angle;
+		ctx.translate( this.x+game.origin.x, this.y+game.origin.y );
+		//ctx.translate( this.x, this.y );
+		ctx.rotate( a );
+		ctx.drawImage( this.img, -Math.floor(this.w/2), -(this.h-40) );
+		ctx.rotate( -a );
+		ctx.translate( -this.x-game.origin.x, -this.y-game.origin.y );
+		//ctx.translate( -this.x, -this.y );
+	},
+	role : function(){
+		return "gun";
+	}
 });
 
 
@@ -105,56 +105,56 @@ var LevelObj = $.inherit( Obj, {
 	__constructor : function( p, img_name ){
 		this.__base( p, img_name );
 	},
-  addNewNeighbour : function( count, color ) {
-    if( count>0 ) {
-       var c = this.getNeighbour();
-       for( i in c ) {
-          if( c[i] ) {
-             var lvl = game.getLevel();
-             if( lvl[c[i][0]]==null ) {
-		/*
-		// Alternative method to check if already added
-		for( j in game.objs ) {
-			if( game.objs[j].ind==c[i][0] )
-				break;
+	addNewNeighbour : function( count, color ) {
+		if( count>0 ) {
+		   var c = this.getNeighbour();
+		   for( i in c ) {
+			  if( c[i] ) {
+				 var lvl = game.getLevel();
+				 if( lvl[c[i][0]]==null ) {
+			/*
+			// Alternative method to check if already added
+			for( j in game.objs ) {
+				if( game.objs[j].ind==c[i][0] )
+					break;
+			}
+			if( game.objs[j].ind==c[i][0] )	// already exists
+				continue;
+			*/
+			var p = game.getPosition( c[i][0] );
+					var o = new Coin( p, null, color );
+					if( game.addObj( o ) ) {
+					   game.level[c[i][0]] = o;
+					   //game.debug( "add id:"+c[i][0]+ " x:"+Math.round(p.x)+" y:"+Math.round(p.y)+" c:"+count );
+					   o.addNewNeighbour( count-1, color );
+					}
+				 //} else {
+				 //   c[i][1].color = this.color;
+				 }
+			  }
+		   }
 		}
-		if( game.objs[j].ind==c[i][0] )	// already exists
-			continue;
-		*/
-		var p = game.getPosition( c[i][0] );
-                var o = new Coin( p, null, color );
-                if( game.addObj( o ) ) {
-                   game.level[c[i][0]] = o;
-                   //game.debug( "add id:"+c[i][0]+ " x:"+Math.round(p.x)+" y:"+Math.round(p.y)+" c:"+count );
-                   o.addNewNeighbour( count-1, color );
-                }
-             //} else {
-             //   c[i][1].color = this.color;
-             }
-          }
-       }
-    }
-  },
-  getNeighbour : function() {
+	},
+	getNeighbour : function() {
 		var lvl = game.getLevel();
 		var c = [];
 		var yind = Math.round( (this.y-game.coin_h/2)/(game.coin_h*0.5) );
 		if( yind%2==1 ) coef = 0;
 		else coef = 1;
-    if( this.ind>game.x_coins+1 ) c.push( [this.ind-game.x_coins-1+coef, lvl[this.ind-game.x_coins-1+coef]] );
-    if( this.ind>game.x_coins*2 ) c.push( [this.ind-game.x_coins*2, lvl[this.ind-game.x_coins*2]] );
-    if( this.ind>game.x_coins && this.ind%18>0 ) c.push( [this.ind-game.x_coins+coef, lvl[this.ind-game.x_coins+coef]] );
-    
-    if( this.ind<game.max_coins+game.x_coins-1 ) c.push( [this.ind+game.x_coins-1+coef, lvl[this.ind+game.x_coins-1+coef]] );
-    if( this.ind<game.max_coins+game.x_coins*2 ) c.push( [this.ind+game.x_coins*2, lvl[this.ind+game.x_coins*2]] );
-    if( this.ind<game.max_coins+game.x_coins ) c.push( [this.ind+game.x_coins+coef, lvl[this.ind+game.x_coins+coef]] );
-    /*
-    for( i in c )
-      if( c[i] )
-         game.debug( "ind: "+this.ind+" neighbour:"+c[i][0] );
-    */
+		if( this.ind>game.x_coins+1 ) c.push( [this.ind-game.x_coins-1+coef, lvl[this.ind-game.x_coins-1+coef]] );
+		if( this.ind>game.x_coins*2 ) c.push( [this.ind-game.x_coins*2, lvl[this.ind-game.x_coins*2]] );
+		if( this.ind>game.x_coins && this.ind%18>0 ) c.push( [this.ind-game.x_coins+coef, lvl[this.ind-game.x_coins+coef]] );
+
+		if( this.ind<game.max_coins+game.x_coins-1 ) c.push( [this.ind+game.x_coins-1+coef, lvl[this.ind+game.x_coins-1+coef]] );
+		if( this.ind<game.max_coins+game.x_coins*2 ) c.push( [this.ind+game.x_coins*2, lvl[this.ind+game.x_coins*2]] );
+		if( this.ind<game.max_coins+game.x_coins ) c.push( [this.ind+game.x_coins+coef, lvl[this.ind+game.x_coins+coef]] );
+		/*
+		for( i in c )
+		  if( c[i] )
+			 game.debug( "ind: "+this.ind+" neighbour:"+c[i][0] );
+		*/
 		return c;
-  },
+	},
 });
 
 
@@ -283,73 +283,72 @@ var Hime = $.inherit( LevelObj, {
 
 
 var CoinObj = $.inherit( LevelObj, {
-  __constructor : function( p, v, color, role ){
-	if( !( color>0 && color<6 ) )
-		color = 1;
-	this.__base( p, "el"+color+".png" );
-	this.w = 25;
-	this.h = 23;
-	this.v = v;
-    this.color = color;
-    this.role = role;
-    this.obj_id = 0;
-  },
-  doAnim : function( game ){
-    if( this.v!=null ) {
-      this.x += (this.v.x); //*this.x;
-      this.y += (this.v.y); //*this.y;
-      if( this.y>600 ) {
-	game.delObj( this );
-        //this.v = null;
-      }
-      if( this.x-this.w/2<0 ) {
-        // Left
-        this.v.x = -this.v.x;
-      } else if( this.x+this.w/2>630 ) {
-        // Right
-        this.v.x = -this.v.x;
-      }
-      if( this.y-this.h/2<0 ) {
-        this.v.y = -this.v.y;
-      }
-	this.lastind = this.ind;
-      this.ind = game.getIndex( this );
-	if( this.lastind!=this.ind )
-           this.checkCollisions( game );
-    }
-  },
-  checkCollisions : function( game ) {
-	var lvl = game.getLevel();
-	if( lvl[this.ind]!=null ) {
+	__constructor : function( p, v, color, role ){
+		if( !( color>0 && color<6 ) )
+			color = 1;
+		this.__base( p, "el"+color+".png" );
+		this.w = 25;
+		this.h = 23;
+		this.v = v;
+		this.color = color;
+		this.role = role;
+		this.obj_id = 0;
+	},
+	doAnim : function( game ){
+		if( this.v!=null ) {
+			this.x += (this.v.x); //*this.x;
+			this.y += (this.v.y); //*this.y;
+			if( this.y>600 ) {
+				game.delObj( this );
+				//this.v = null;
+			}
+			if( this.x-this.w/2<0 ) {
+				// Left
+				this.v.x = -this.v.x;
+			} else if( this.x+this.w/2>630 ) {
+				// Right
+				this.v.x = -this.v.x;
+			}
+			if( this.y-this.h/2<0 ) {
+				this.v.y = -this.v.y;
+			}
+			this.lastind = this.ind;
+			this.ind = game.getIndex( this );
+			if( this.lastind!=this.ind )
+				this.checkCollisions( game );
+		}
+	},
+	checkCollisions : function( game ) {
+		var lvl = game.getLevel();
+		if( lvl[this.ind]!=null ) {
+			game.delObj( this );
+			lvl[this.ind].collide( this.color );
+		}
+	},
+	collide : function( color ) {
+		if( this.color==color ) {
+			//game.debug( "this.destroyNeighbour ind:"+this.obj_id );
+			this.destroyNeighbour();
+		} else {
+			//game.debug( "this.addNewNeighbour ind:"+this.ind );
+			//lvl[this.ind].color = this.color;
+			this.addNewNeighbour( 2, color );
+		}
+	},
+	destroyNeighbour : function() {
+		var i = 0;
+		var c = this.getNeighbour();
 		game.delObj( this );
-		lvl[this.ind].collide( this.color );
+		for( i in c ) {
+			if( c[i] )
+				if( c[i][1] && c[i][1].color==this.color )
+						c[i][1].destroyNeighbour();
+		}
+		game.score += 10;
+	},
+	role : function(){
+		return this.role;
 	}
-  },
-  collide : function( color ) {
-	if( this.color==color ) {
-        	//game.debug( "this.destroyNeighbour ind:"+this.obj_id );
-		this.destroyNeighbour();
-	} else {
-       		//game.debug( "this.addNewNeighbour ind:"+this.ind );
-		//lvl[this.ind].color = this.color;
-		this.addNewNeighbour( 2, color );
-	}
-  },
-  destroyNeighbour : function() {
-    var i = 0;
-    var c = this.getNeighbour();
-    game.delObj( this );
-    for( i in c ) {
-      if( c[i] )
-       if( c[i][1] )
-          if( c[i][1].color==this.color )
-             c[i][1].destroyNeighbour();
-    }
-	game.score += 10;
-  },
-  role : function(){
-    return this.role;
-  }
 });
 
 
@@ -368,9 +367,10 @@ var GunCoin = $.inherit( CoinObj, {
 
 
 var HSGame = $.inherit( LSGame, {
-	__constructor : function( canvas ){
+	__constructor : function( canvas, gamemode ){
 		this.__base( canvas );
 		// Globals
+		this.gamemode = gamemode;
 		this.coin_w = 25;
 		this.coin_h = 23;
 		this.x_coins = 17; //Math.floor(580/(this.coin_w*1.25));
@@ -378,10 +378,15 @@ var HSGame = $.inherit( LSGame, {
 		this.max_coins = this.y_coins * this.x_coins;
          	this.debug( "y_coins: "+this.y_coins+" x_coins:"+this.x_coins );
 		
-		this.addObj( new Gun( this ) );
+		if( this.gamemode=="editor" ) {
+			// Editor mode
+			$("#hs_canvas").bind( "click_in_play", {game:this}, this.editClick );
+		} else {
+			this.addObj( new Gun( this ) );
+		}
 		this.current_level = 0;
-		this.lives = 3;
 		this.score = 0;
+		this.lives = 3;
 		this.state = "init";
 	},
 	drawScreen : function() {
@@ -468,22 +473,24 @@ var HSGame = $.inherit( LSGame, {
 	
 	addObj : function( obj ) {
 		if( obj.role=="coin" && obj.ind>game.max_coins-game.x_coins*2 ) {
+			// If too low, loose
 			game.loose();
 			return false;
 		}
+		// Set the level index of this object here
 		obj.ind = this.getIndex( obj );
 		return this.__base( obj );
 	},
 	delObj : function( obj ) {
 		if( obj && this.level[obj.ind]==obj ) {
-			//game.debug( "objid:"+obj.obj_id+" level:"+this.level[obj.ind].obj_id );
+			// Remove the object from the level
 			this.level[obj.ind] = null;
 		}
-			//game.debug( "no match: objid:"+obj.obj_id );
 		this.__base( obj );
 	},
 	
 	getIndex : function( o ) {
+		// Return level index from Point
 		p = new Point( o.x, o.y );
 		//p.x -= this.coin_w/3;
 		p.y -= this.coin_h/2;
@@ -497,6 +504,7 @@ var HSGame = $.inherit( LSGame, {
 		return id;
 	},
 	getPosition : function( id ) {
+		// Return Point from level index
 		var yind = Math.floor( id/this.x_coins ) * this.x_coins;
 		var y = Math.floor( id/this.x_coins ) * (this.coin_h*0.5);
 		if( Math.floor( id/this.x_coins )%2==1 ) coef = 0;
@@ -506,14 +514,39 @@ var HSGame = $.inherit( LSGame, {
 		x += Math.round( this.coin_w/3 );
 		y += Math.round( this.coin_h/2 );
 		return new Point( x, y );
-	}
+	},
+
+	editClick: function( e ) {
+		var g = e.data.game;
+		if( g.mouse.x<g.origin.x ) {
+			// Selection
+			var color = Math.floor( Math.random()*5 ) + 1;
+			var p = new Point( g.cursor.x, g.cursor.y );
+			var c = new Coin( p, null, color );
+			c.doAnim = function() {
+				this.ind = game.getIndex( this );
+				var p = game.getPosition( this.ind );
+				this.x = p.x;
+				this.y = p.y;
+			}
+			//var c = new Breakable( p );
+			g.cursor.attached_obj = c;
+			g.addObj( g.cursor.attached_obj );
+		} else {
+			if( g.cursor.attached_obj!=null ) {
+				//alert( game.cursor.attached_obj.img_name );
+				g.level[g.cursor.attached_obj.ind] = g.cursor.attached_obj;
+				g.cursor.attached_obj = null;
+			}
+		}
+	},
 });
 
 
 
 
 $(document).ready( function() {
-	game = new HSGame( 'hs_board' );
+	game = new HSGame( 'hs_board', gamemode );
 	snds['win'] = game.preloadSound( "win.ogg" );
 	snds['loose'] = game.preloadSound( "loose.ogg" );
 	snds['free'] = game.preloadSound( "dropgood.ogg" );
