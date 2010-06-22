@@ -6,6 +6,10 @@
 
 
 {% block "content" %}
+{% ifequal gamemode 'editor' %}
+  <br>
+  <input type="button" value="save" onclick="saveLevel()">
+{% endifequal %}
 <div id="hs_main" width="800" height="600">
  <div id="hs_left">
   <div id="debug">
@@ -23,7 +27,53 @@
 
 {% block scripts %}
   <script type="text/javascript">
-var gamemode = '{{ gamemode }}';
+$(document).ready( function() {
+	game = new HSGame( 'hs_board', '{{ gamemode }}', {{level}}, {{x_coins}}, {{y_coins}} );
+	snds['win'] = game.preloadSound( "win.ogg" );
+	snds['loose'] = game.preloadSound( "loose.ogg" );
+	snds['free'] = game.preloadSound( "dropgood.ogg" );
+	game.preloadImage( "wall.png" );
+	game.preloadImage( "stone1.png" );
+	game.preloadImage( "stone2.png" );
+	game.preloadImage( "stone3.png" );
+	game.preloadImage( "stone4.png" );
+	game.preloadImage( "stone5.png" );
+	game.preloadImage( "hime.png" );
+	game.preloadImage( "coin.png" );
+	game.preloadImage( "breakable.png" );
+	game.preloadImage( "el1.png" );
+	game.preloadImage( "el2.png" );
+	game.preloadImage( "el3.png" );
+	game.preloadImage( "el4.png" );
+	game.preloadImage( "el5.png" );
+	/*
+	game.levels = [
+	[ 4, 0, 0,  0,  0,  0, 0, 0, 0, 1,  0, 0, 0, 0,  0,  0, 1,
+          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
+          3, 1, 2,  2,  1,  1, 3, 3, 3, 4,  4, 5, 5, 5,  5,  1, 1,
+          3, 1, 2,  2,  1,  1, 3, 3, 3, 4,  4, 5, 5, 5,  4,  1, 1,
+          1, 1, 2, 50,  1,  1, 3, 3, 3, 4,  4, 5, 5, 5, 50,  0, 1,
+          1, 1, 2,  2,  1,  1, 0, 0, 0, 4,  4, 5, 5, 5,  3,  2, 0,
+          1, 1, 2, 10, 20, 30, 0, 0, 0, 4,  4, 5, 5, 5, 11,  0, 0,
+          1, 1, 2,  2,  1,  1, 3, 3, 3, 0,  0, 0, 5, 5,  0,  0, 0,
+	],
+	[ 0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
+          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
+          0, 0, 0,  0, 50,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 2,
+          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 2,
+          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
+          0, 0, 1,  2,  3,  4, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 1,
+          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
+          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 1,
+          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
+          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 1,
+          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
+	]
+	];
+	*/
+	game.init();
+	game.loadLevel();
+} );
   </script>
   <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/jquery.inherit.js"></script>
   <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/libhtml5.js"></script>

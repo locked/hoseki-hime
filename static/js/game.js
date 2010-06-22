@@ -122,7 +122,7 @@ var LevelObj = $.inherit( Obj, {
 				continue;
 			*/
 			var p = game.getPosition( c[i][0] );
-					var o = new Coin( p, null, color );
+					var o = game.createObjFromType( color, 'pos', p ); //new Coin( p, null, color );
 					if( game.addObj( o ) ) {
 					   game.level[c[i][0]] = o;
 					   //game.debug( "add id:"+c[i][0]+ " x:"+Math.round(p.x)+" y:"+Math.round(p.y)+" c:"+count );
@@ -367,16 +367,18 @@ var GunCoin = $.inherit( CoinObj, {
 
 
 var HSGame = $.inherit( LSGame, {
-	__constructor : function( canvas, gamemode ){
+	__constructor : function( canvas, gamemode, level, x_coins, y_coins ){
+	        // level=0, x_coins=17, y_coins=35
 		this.__base( canvas );
 		// Globals
+		this.levels = {};
 		this.gamemode = gamemode;
 		this.coin_w = 25;
 		this.coin_h = 23;
-		this.x_coins = 17; //Math.floor(580/(this.coin_w*1.25));
-		this.y_coins = 35; //Math.floor(630/(this.coin_h));
+		this.x_coins = x_coins; //Math.floor(580/(this.coin_w*1.25));
+		this.y_coins = y_coins; //Math.floor(630/(this.coin_h));
 		this.max_coins = this.y_coins * this.x_coins;
-         	this.debug( "y_coins: "+this.y_coins+" x_coins:"+this.x_coins );
+         	//this.debug( "y_coins: "+this.y_coins+" x_coins:"+this.x_coins );
 		
 		if( this.gamemode=="editor" ) {
 			// Editor mode
@@ -384,7 +386,7 @@ var HSGame = $.inherit( LSGame, {
 		} else {
 			this.addObj( new Gun( this ) );
 		}
-		this.current_level = 0;
+		this.current_level = level;
 		this.score = 0;
 		this.lives = 3;
 		this.state = "init";
@@ -407,9 +409,10 @@ var HSGame = $.inherit( LSGame, {
 		} else {
 			// Special screens
 			if( o.state=="loose" || o.state=="loose_real" || o.state=="win" ) {
-				o.initLevel();
+				o.loadLevel();
 			}
 		}
+		return false;
 	},
 	loose : function() {
 		// Loose
@@ -437,6 +440,37 @@ var HSGame = $.inherit( LSGame, {
 				this.delObj( this.level[id] );
 		}
 	},
+	createObjFromType : function( t, idpos, id ) {
+		if( idpos=="id" )
+			var p = this.getPosition( id );
+		else
+			var p = id;
+		var c = null;
+		if( t>0 && t<6 ) {
+			c = new Coin( p, null, t );
+		} else if( t==10 ) {
+			c = new Breakable( p );
+		} else if( t==11 ) {
+			c = new Wall( p );
+		} else if( t==20 ) {
+			c = new Gold( p );
+		} else if( t==30 ) {
+			c = new Unbreakable( p );
+		} else if( t==50 ) {
+			c = new Hime( p );
+		}
+		if( c )
+			c.type = t;
+		return c;
+	},
+	loadLevel : function() {
+		var level = this.current_level;
+		$.getJSON( "/r5/himesama/level/"+level+"/load", function (json) {
+			game.levels[json.level] = json.elements;
+			game.current_level = json.level;
+			game.initLevel();
+		} );
+	},
 	initLevel : function() {
 		this.cleanLevel();
 		var level_id = this.current_level;
@@ -445,20 +479,7 @@ var HSGame = $.inherit( LSGame, {
 		var level = [];
 		for( var id in lvl ) {
 			var t = lvl[id];
-			var c = null;
-			if( t>0 && t<6 ) {
-				c = new Coin( this.getPosition( id ), null, t );
-			} else if( t==10 ) {
-				c = new Breakable( this.getPosition( id ) );
-			} else if( t==11 ) {
-				c = new Wall( this.getPosition( id ) );
-			} else if( t==20 ) {
-				c = new Gold( this.getPosition( id ) );
-			} else if( t==30 ) {
-				c = new Unbreakable( this.getPosition( id ) );
-			} else if( t==50 ) {
-				c = new Hime( this.getPosition( id ) );
-			}
+			var c = this.createObjFromType( t, 'id', id );
 			if( c ) {
 				this.addObj( c );
 			}
@@ -518,11 +539,11 @@ var HSGame = $.inherit( LSGame, {
 
 	editClick: function( e ) {
 		var g = e.data.game;
-		if( g.mouse.x<g.origin.x ) {
+		if( g.mouse.x<g.origin.x && g.mouse.y<340 ) {
 			// Selection
 			var color = Math.floor( Math.random()*5 ) + 1;
 			var p = new Point( g.cursor.x, g.cursor.y );
-			var c = new Coin( p, null, color );
+			var c = g.createObjFromType( color, 'pos', p ); //new Coin( p, null, color );
 			c.doAnim = function() {
 				this.ind = game.getIndex( this );
 				var p = game.getPosition( this.ind );
@@ -539,55 +560,22 @@ var HSGame = $.inherit( LSGame, {
 				g.cursor.attached_obj = null;
 			}
 		}
+		return false;
 	},
 });
 
 
-
-
-$(document).ready( function() {
-	game = new HSGame( 'hs_board', gamemode );
-	snds['win'] = game.preloadSound( "win.ogg" );
-	snds['loose'] = game.preloadSound( "loose.ogg" );
-	snds['free'] = game.preloadSound( "dropgood.ogg" );
-	game.preloadImage( "wall.png" );
-	game.preloadImage( "stone1.png" );
-	game.preloadImage( "stone2.png" );
-	game.preloadImage( "stone3.png" );
-	game.preloadImage( "stone4.png" );
-	game.preloadImage( "stone5.png" );
-	game.preloadImage( "hime.png" );
-	game.preloadImage( "coin.png" );
-	game.preloadImage( "breakable.png" );
-	game.preloadImage( "el1.png" );
-	game.preloadImage( "el2.png" );
-	game.preloadImage( "el3.png" );
-	game.preloadImage( "el4.png" );
-	game.preloadImage( "el5.png" );
-	game.levels = [
-	[ 4, 0, 0,  0,  0,  0, 0, 0, 0, 1,  0, 0, 0, 0,  0,  0, 1,
-          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
-          3, 1, 2,  2,  1,  1, 3, 3, 3, 4,  4, 5, 5, 5,  5,  1, 1,
-          3, 1, 2,  2,  1,  1, 3, 3, 3, 4,  4, 5, 5, 5,  4,  1, 1,
-          1, 1, 2, 50,  1,  1, 3, 3, 3, 4,  4, 5, 5, 5, 50,  0, 1,
-          1, 1, 2,  2,  1,  1, 0, 0, 0, 4,  4, 5, 5, 5,  3,  2, 0,
-          1, 1, 2, 10, 20, 30, 0, 0, 0, 4,  4, 5, 5, 5, 11,  0, 0,
-          1, 1, 2,  2,  1,  1, 3, 3, 3, 0,  0, 0, 5, 5,  0,  0, 0,
-	],
-	[ 0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
-          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
-          0, 0, 0,  0, 50,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 2,
-          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 2,
-          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
-          0, 0, 1,  2,  3,  4, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 1,
-          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
-          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 1,
-          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
-          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 1,
-          0, 0, 0,  0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0,  0,  0, 0,
-	]
-	];
-	game.init();
-	game.initLevel();
-} );
-
+function saveLevel() {
+	var elts = [];
+	for( var id in game.level ) {
+		var elt = 0;
+		if( game.level[id] ) {
+			elt = game.level[id].type;
+		}
+		elts.push( elt );
+	}
+	var data = { 'elements': elts.join( "," ) };
+	$.getJSON( "/r5/himesama/level/"+game.current_level+"/save", data, function (json) {
+		alert( json['result'] );
+	} );
+}
