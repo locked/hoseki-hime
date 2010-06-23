@@ -174,6 +174,36 @@ var Gun = $.inherit( Obj, {
 var LevelObj = $.inherit( Obj, {
 	__constructor : function( p, img_name ){
 		this.__base( p, img_name );
+		this.state = null;
+		this.destruction_step = 0;
+		this.destruction_steps = 30;
+		this.timeout_start = (new Date()).getTime();
+		this.timeout = 0;
+	},
+	doAnim : function( game ) {
+		var today = new Date();
+		if( this.state=="wait_destruction" ) {
+			if( this.timeout<(today.getTime()-this.timeout_start) ) {
+				this.state = "destruction";
+			}
+		}
+		if( this.state=="destruction" ) {
+				//debug( (today.getTime()-this.timeout_start) );
+				this.destruction_step+=2;
+				//debug( this.destruction_steps );
+				if( this.destruction_step>this.destruction_steps )
+					game.delObj( this );
+		}
+	},
+	suicide : function( timeout ) {
+		game.level[this.ind] = null;
+		if( timeout>0 ) {
+			this.timeout = timeout;
+			this.timeout_start = (new Date()).getTime();
+			this.state = "wait_destruction";
+		} else {
+			this.state = "destruction";
+		}
 	},
 	addNewNeighbour : function( count, color ) {
 		if( count>0 ) {
@@ -193,8 +223,8 @@ var LevelObj = $.inherit( Obj, {
 					*/
 					var p = game.getPosition( c[i][0] );
 					var o = game.createObjFromType( color, 'pos', p ); //new Coin( p, null, color );
-					if( game.addObj( o ) ) {
-						game.level[c[i][0]] = o;
+					if( game.addObj( o, true ) ) {
+						//game.level[c[i][0]] = o;
 						//game.debug( "add id:"+c[i][0]+ " x:"+Math.round(o.x)+" y:"+Math.round(o.y)+" c:"+count+" co:"+color );
 						o.addNewNeighbour( count-1, color );
 					}
@@ -321,7 +351,7 @@ var Scatter = $.inherit( AnimatedObj, {
 				if( lvl[c[i][0]]!=null && lvl[c[i][0]]!=this ) {
 					//if( c[i][1] ) {
 					//debug( "Convert existing element" );
-					c[i][1].convert( color );
+					if( c[i][1] ) c[i][1].convert( color );
 				} else {
 					//debug( "Convert non-existing element: create new" );
 					var o = game.createObjFromType( color, 'id', c[i][0] );
@@ -430,6 +460,7 @@ var CoinObj = $.inherit( LevelObj, {
 		this.obj_id = 0;
 	},
 	doAnim : function( game ){
+		this.__base( game );
 		if( this.v!=null ) {
 			this.x += (this.v.x); //*this.x;
 			this.y += (this.v.y); //*this.y;
@@ -473,27 +504,63 @@ var CoinObj = $.inherit( LevelObj, {
 	collide : function( color ) {
 		if( this.color==color ) {
 			//game.debug( "this.destroyNeighbour ind:"+this.obj_id );
-			this.destroyNeighbour();
+			this.destroyNeighbour( 0 );
 		} else {
 			//game.debug( "this.addNewNeighbour ind:"+this.ind );
 			//lvl[this.ind].color = this.color;
 			this.addNewNeighbour( 2, color );
 		}
 	},
-	destroyNeighbour : function() {
+	render : function( ctx ) {
+		if( this.state=="destruction" ) {
+			/*
+			ctx.lineWidth = 1;
+			ctx.lineCap = 'square';
+			var locx = this.x+game.origin.x;
+			var locy = this.y+game.origin.y;
+			ctx.moveTo(locx-0.5, locy-0.5);
+			ctx.lineTo(locx+0.5, locy-0.5);
+			ctx.lineTo(locx+0.5, locy+0.5);
+			ctx.lineTo(locx-0.5, locy+0.5);
+			ctx.lineTo(locx-0.5, locy-0.5);
+			*/
+			var alphas = ['0.1','0.2','0.4','0.7','1'];
+			for( i in alphas ) {
+				ctx.beginPath();
+				var alpha = alphas[i];
+				var dec = this.destruction_step/(alphas.length-i+1);
+				if( this.color==1 )
+					ctx.strokeStyle = 'rgba(0,0,255,'+alpha+')';
+				else if( this.color==2 )
+					ctx.strokeStyle = 'rgba(0,255,0,'+alpha+')';
+				else if( this.color==3 )
+					ctx.strokeStyle = 'rgba(255,100,200,'+alpha+')';
+				else if( this.color==4 )
+					ctx.strokeStyle = 'rgba(255,0,0,'+alpha+')';
+				else if( this.color==5 )
+					ctx.strokeStyle = 'rgba(250,200,20,'+alpha+')';
+				//debug( ctx.strokeStyle );
+				ctx.moveTo(this.x+game.origin.x+dec, this.y+game.origin.y);
+				ctx.arc(this.x+game.origin.x, this.y+game.origin.y, dec, 0, Math.PI*2, true);
+				ctx.closePath();
+				ctx.stroke();
+			}
+		} else {
+			this.__base( ctx );
+		}
+	},
+	destroyNeighbour : function( depth ) {
 		var i = 0;
 		var c = this.getNeighbour();
-		game.delObj( this );
+		//game.delObj( this );
+		this.suicide( depth*100 );
 		for( i in c ) {
-			if( c[i] && c[i][1] ) {
-				//if( signal=="collide" ) {
-					// Collision, no depth limit
-				if( c[i][1].color==this.color )
-					c[i][1].destroyNeighbour();
-				//} else {
-				// Explosion, decrease depth
-				//	c[i][1].destroyNeighbour( signal, depth-1 );
-				//}
+			var lvl = game.getLevel();
+			var elem = lvl[c[i][0]];
+			if( c[i] && elem ) {
+				if( elem.color==this.color ) {
+					elem.destroyNeighbour( depth+1 );
+				}
 			}
 		}
 		game.score += 10;
@@ -691,11 +758,17 @@ var HSGame = $.inherit( LSGame, {
 		}
 		// Set the level index of this object here
 		obj.ind = this.getIndex( obj );
-		if( obj.ind>=0 && update_level )
+		if( obj.ind>=0 && update_level ) {
+			if( this.level[obj.ind] ) {
+				delete obj;
+				return null;
+			}
 			this.level[obj.ind] = obj;
+		}
 		return this.__base( obj );
 	},
 	delObj : function( obj ) {
+		//if( typeof update_level=="undefined" ) update_level = true;
 		if( obj && this.level[obj.ind]==obj ) {
 			// Remove the object from the level
 			this.level[obj.ind] = null;

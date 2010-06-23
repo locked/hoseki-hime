@@ -22,6 +22,7 @@ var fps = 0;
 var lasttime = 0;
 var frame = 0;
 
+var debug_mode = false;
 
 var Point = $.inherit({
 	__constructor : function( x, y ){
@@ -68,11 +69,11 @@ var Obj = $.inherit( Point, {
 	},
 	render : function( ctx ) {
 		ctx.drawImage( this.img, Math.round(this.x-Math.round(this.w/2))+game.origin.x, Math.floor(this.y-this.h/2)+game.origin.y, this.w, this.h );
-		if( this.ind ) {
+		if( this.ind && debug_mode ) {
 			ctx.fillStyle = "#fff";
 			ctx.font = 'arial 5px';
-			//ctx.fillText( this.ind, Math.floor(this.x-this.w/2)+4, Math.floor(this.y-this.h/2)+10 );
-			//ctx.fillText( this.obj_id, Math.floor(this.x-this.w/2)+4, Math.floor(this.y-this.h/2)+18 );
+			ctx.fillText( this.ind, Math.floor(this.x-this.w/2)+4+game.origin.x, Math.floor(this.y-this.h/2)+10+game.origin.y );
+			ctx.fillText( this.obj_id, Math.floor(this.x-this.w/2)+4+game.origin.x, Math.floor(this.y-this.h/2)+18+game.origin.y );
 		}
 	}
 });
@@ -152,10 +153,13 @@ var LSGame = $.inherit({
 		return false;
 	},
 	delObj : function( obj ) {
-		delete this.objs[obj.obj_id];
-		//this.objs.splice(obj.obj_id, 1);
-		//game.debug( "delObj: "+obj.obj_id+" ind:"+this.objs[obj.obj_id].ind+" l:"+len+"/"+this.objs.length );
-		return true;
+		//if( obj && obj.obj_id && this.objs[obj.obj_id] ) {
+			//this.objs.splice(obj.obj_id, 1);
+			//if( obj.ind==302 )
+			//	game.debug( "delObj: "+obj.obj_id+" ind:"+this.objs[obj.obj_id].ind+"/"+this.objs.length );
+			delete this.objs[obj.obj_id];
+		//	return true;
+		//}
 	},
 	addObj : function( obj ) {
 		obj.img = this.preloadImage( obj.img_name );
