@@ -90,11 +90,9 @@ var Cursor = $.inherit( Point, {
 			this.attached_obj.doAnim();
 		}
 	},
-	/*render : function( ctx ) {
-		if( this.attached_obj ) {
-			this.attached_obj.render( ctx );
-		}
-	},*/
+	render : function( ctx ) {
+		// Nothing
+	},
 	role : function() {
 		return "cursor";
 	}
@@ -168,8 +166,9 @@ var LSGame = $.inherit({
 		this.loadSounds();
 	},
 	start : function() {
-		// Start loop, at around 24 FPS
-		setInterval( drawAll, 40 );
+		// Start loop, at around 30 FPS
+		setInterval( animAll, 24 );
+		setInterval( drawAll, 48 );
 	},
 	drawBack : function( ctx ) {
 		// Draw scores, lives, etc...
@@ -182,6 +181,13 @@ var LSGame = $.inherit({
 		// Call an external debug functional for the sake of simplicity
 		debug( txt );
 	},
+	animAll : function() {
+		for( var id in this.objs ) {
+			if( this.objs[id] )
+				this.objs[id].doAnim( game );
+		}
+		this.cursor.doAnim( game );
+	},
 	drawAll : function() {
 		/**
 		 * Animation loop
@@ -193,18 +199,18 @@ var LSGame = $.inherit({
 		this.drawBack( ctx );
 
 		if( this.state=="play" ) {
-			for( var id in this.objs ) {
-				this.objs[id].doAnim( game );
-			}
 			/*
 			for( var id in this.explosions ) {
 				this.explosions[id].doAnim( game );
 			}
 			*/
-			this.cursor.doAnim( game );
-
 			for( var id in this.objs ) {
-				this.objs[id].render( ctx );
+				if( this.objs[id] ) {
+					//if( this.objs[id].ind==110 )
+					//	debug( "HEYYYY" );
+					//this.objs[id].doAnim( game );
+					this.objs[id].render( ctx );
+				}
 			}
 			/*
 			for( var id in this.explosions ) {
@@ -215,6 +221,7 @@ var LSGame = $.inherit({
 			this.drawScreen();
 		}
 
+		//this.cursor.doAnim( game );
 		this.cursor.render( ctx );
 
 		frame++;
@@ -224,9 +231,9 @@ var LSGame = $.inherit({
 			lasttime = curtime;
 			frame = 0;
 			//debug( fps );
+			ctx.fillStyle = "#fff";
+			ctx.font = '14px Arial';
 		}
-		ctx.fillStyle = "#fff";
-		ctx.font = '14px Arial';
 		ctx.fillText( fps+" fps", 10, 360 );
 
 		ctx.restore();
@@ -304,6 +311,9 @@ var LSGame = $.inherit({
 // TODO: find a clean way to do that
 drawAll = function() {
 	game.drawAll();
+}
+animAll = function() {
+	game.animAll();
 }
 
 
