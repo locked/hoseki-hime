@@ -46,19 +46,8 @@ var Button = $.inherit( Obj, {
 				this.game.delObj( this.game.cursor.attached_obj );
 				this.game.cursor.attached_obj = null;
 			}
-			//var color = Math.floor( Math.random()*5 ) + 1;
-			var p = new Point( this.game.cursor.x, this.game.cursor.y );
-			//var c = this.game.createObjFromType( color, 'pos', p );
-			var c = this.game.createObjFromType( this.attached_obj.type, 'pos', p );
-			c.doAnim = function() {
-				this.ind = game.getIndex( this );
-				var p = game.getPosition( this.ind );
-				this.x = p.x;
-				this.y = p.y;
-			}
-			this.game.cursor.attached_obj = c;
-			this.game.addObj( this.game.cursor.attached_obj );
 			//debug( "attached obj"+c.obj_id );
+			this.game.newCursorObj( this.attached_obj );
 		}
 	},
 	clickInside: function( mouse ) {
@@ -655,10 +644,25 @@ var HSGame = $.inherit( LSGame, {
 			if( g.cursor.attached_obj!=null ) {
 				//alert( game.cursor.attached_obj.img_name );
 				g.level[g.cursor.attached_obj.ind] = g.cursor.attached_obj;
-				g.cursor.attached_obj = null;
+				//g.cursor.attached_obj = null;
+				g.newCursorObj( g.cursor.attached_obj );
 			}
 		}
 		return false;
+	},
+	newCursorObj: function( obj ) {
+		//var color = Math.floor( Math.random()*5 ) + 1;
+		var p = new Point( this.cursor.x, this.cursor.y );
+		//var c = this.game.createObjFromType( color, 'pos', p );
+		var c = this.createObjFromType( obj.type, 'pos', p );
+		c.doAnim = function() {
+			this.ind = game.getIndex( this );
+			var p = game.getPosition( this.ind );
+			this.x = p.x;
+			this.y = p.y;
+		}
+		this.cursor.attached_obj = c;
+		this.addObj( this.cursor.attached_obj );
 	},
 });
 
