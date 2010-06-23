@@ -67,7 +67,7 @@ var Obj = $.inherit( Point, {
 		return "obj";
 	},
 	render : function( ctx ) {
-		ctx.drawImage( this.img, Math.floor(this.x-this.w/2)+game.origin.x, Math.floor(this.y-this.h/2)+game.origin.y, this.w, this.h );
+		ctx.drawImage( this.img, Math.round(this.x-Math.round(this.w/2))+game.origin.x, Math.floor(this.y-this.h/2)+game.origin.y, this.w, this.h );
 		if( this.ind ) {
 			ctx.fillStyle = "#fff";
 			ctx.font = 'arial 5px';
@@ -140,10 +140,16 @@ var LSGame = $.inherit({
 			//game.debug( game.mouse.info() );
 		});
 		$("#hs_canvas").bind( "click", {o:this}, this.click );
+		$("#hs_canvas").dblclick( this.dblclick );
+		$("#hs_canvas").get(0).onselectstart = function () { return false; };
 	},
 	drawScreen : function() {
 	},
+	dblclick : function( e ) {
+		return false;
+	},
 	click : function( e ) {
+		return false;
 	},
 	delObj : function( obj ) {
 		delete this.objs[obj.obj_id];
@@ -167,10 +173,12 @@ var LSGame = $.inherit({
 	},
 	start : function() {
 		// Start loop, at around 30 FPS
-		setInterval( animAll, 24 );
-		setInterval( drawAll, 48 );
+		//setInterval( animAll, 24 );
+		setInterval( drawAll, 33 );
 	},
-	drawBack : function( ctx ) {
+	drawAfter : function( ctx ) {
+	},
+	drawBefore : function( ctx ) {
 		// Draw scores, lives, etc...
 		ctx.fillStyle = "#fff";
 		ctx.font = '14px Arial';
@@ -196,9 +204,10 @@ var LSGame = $.inherit({
 		ctx.clearRect(0,0,800,600);
 		ctx.save();
 
-		this.drawBack( ctx );
+		this.drawBefore( ctx );
 
 		if( this.state=="play" ) {
+			this.animAll();
 			/*
 			for( var id in this.explosions ) {
 				this.explosions[id].doAnim( game );
@@ -221,6 +230,8 @@ var LSGame = $.inherit({
 			this.drawScreen();
 		}
 
+		this.drawAfter( ctx );
+		
 		//this.cursor.doAnim( game );
 		this.cursor.render( ctx );
 

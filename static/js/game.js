@@ -243,8 +243,12 @@ var LevelObj = $.inherit( Obj, {
 var AnimatedObj = $.inherit( LevelObj, {
 	__constructor : function( p, img_name, max_frame ){
 		this.__base( p, img_name );
-		this.w = 25;
-		this.h = 25;
+		if( ! this.w )
+			this.w = 25;
+		if( ! this.h )
+			this.h = 25;
+		this.wh = Math.floor(this.w/2);
+		this.hh = Math.floor(this.h/2);
 		this.frame = 0;
 		this.max_frame = max_frame;
 	},
@@ -254,7 +258,7 @@ var AnimatedObj = $.inherit( LevelObj, {
 			this.frame = 0;
 	},
 	render : function( ctx ) {
-		ctx.drawImage( this.img,  Math.floor(this.frame)*this.w, 0, this.w, this.h,  Math.floor(this.x-this.w/2)+game.origin.x, Math.floor(this.y-this.h/2)+game.origin.y, this.w, this.h );
+		ctx.drawImage( this.img,  Math.floor(this.frame)*this.w, 0, this.w, this.h,  Math.floor(this.x-this.wh)+game.origin.x, Math.floor(this.y-this.hh)+game.origin.y, this.w, this.h );
 	}
 });
 
@@ -301,9 +305,9 @@ var Wall = $.inherit( LevelObj, {
 
 var Scatter = $.inherit( AnimatedObj, {
 	__constructor : function( p ){
-		this.__base( p, "white_stone.png", 5 );
 		this.w = 25;
 		this.h = 23;
+		this.__base( p, "white_stone.png", 5 );
 	},
 	collide: function( color ) {
 		this.convert( color );
@@ -332,9 +336,9 @@ var Scatter = $.inherit( AnimatedObj, {
 
 var Bomb = $.inherit( AnimatedObj, {
 	__constructor : function( p ){
-		this.__base( p, "bomb.png", 5 );
 		this.w = 41;
 		this.h = 30;
+		this.__base( p, "bomb.png", 5 );
 	},
 	collide : function( color ) {
 		game.delObj( this );
@@ -352,9 +356,9 @@ var Bomb = $.inherit( AnimatedObj, {
 
 var Gold = $.inherit( AnimatedObj, {
 	__constructor : function( p ){
-		this.__base( p, "coin.png", 28 );
 		this.w = 23;
 		this.h = 23;
+		this.__base( p, "coin.png", 28 );
 	},
 	collide : function( color ) {
 		game.score += 500;
@@ -556,12 +560,23 @@ var HSGame = $.inherit( LSGame, {
 				this.addObj( b );
 			}
 		} else {
-			this.addObj( new Gun( this ) );
+			//this.addObj( new Gun( this ) );
+			this.gun = new Gun( this );
+			this.gun.img = this.preloadImage( this.gun.img_name );
 		}
 		this.current_level = level;
 		this.score = 0;
 		this.lives = 3;
 		this.state = "init";
+	},
+	drawBefore : function( ctx ) {
+		if( this.gun )
+			this.gun.doAnim();
+	},
+	drawAfter : function( ctx ) {
+		//debug( this.gun );
+		if( this.gun )
+			this.gun.render( ctx );
 	},
 	drawScreen : function() {
 		ctx.font = '16px Arial';
