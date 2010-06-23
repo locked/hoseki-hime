@@ -20,6 +20,86 @@
 var snds = {};
 var game = null;
 
+var Button = $.inherit( Obj, {
+	__constructor : function( game, type ) {
+		this.game = game;
+		this.type = type;
+		this.w = 50;
+		this.h = 40;
+		this.id = this.game.buttons.length;
+		this.selected = false;
+		var p = new Point( 0, 0 );
+		this.attached_obj = this.game.createObjFromType( type, 'pos', p ); //new Coin( p, null, color );
+		if( this.attached_obj ) {
+			this.game.addObj( this.attached_obj );
+		}
+	},
+	unSelect: function() {
+		this.selected = false;
+		//debug( "test remove element: "+this.game.cursor.attached_obj+" / "+this.selected );
+	},
+	select: function() {
+		// Selection
+		this.selected = true;
+		if( this.attached_obj ) {
+			if( this.game.cursor.attached_obj ) {
+				this.game.delObj( this.game.cursor.attached_obj );
+				this.game.cursor.attached_obj = null;
+			}
+			//var color = Math.floor( Math.random()*5 ) + 1;
+			var p = new Point( this.game.cursor.x, this.game.cursor.y );
+			//var c = this.game.createObjFromType( color, 'pos', p );
+			var c = this.game.createObjFromType( this.attached_obj.type, 'pos', p );
+			c.doAnim = function() {
+				this.ind = game.getIndex( this );
+				var p = game.getPosition( this.ind );
+				this.x = p.x;
+				this.y = p.y;
+			}
+			this.game.cursor.attached_obj = c;
+			this.game.addObj( this.game.cursor.attached_obj );
+			//debug( "attached obj"+c.obj_id );
+		}
+	},
+	clickInside: function( mouse ) {
+		if( mouse.x>this.x && mouse.x<this.x+this.w ) {
+			if( mouse.y>this.y && mouse.y<this.y+this.h ) {
+				//if( this.selected ) this.unSelect();
+				//else this.select();
+				return true;
+			}
+		}
+		return false;
+	},
+	doAnim: function() {
+		var margin = 1.1;
+		this.x = (this.id % 2)*this.w*margin + this.game.buttons_area[0].x;
+		this.y = Math.floor( (this.id/this.game.buttons.length) * this.h * margin * (this.game.buttons.length/2) ) + this.game.buttons_area[0].y;
+		if( this.attached_obj ) {
+			this.attached_obj.x = this.x - this.game.origin.x + this.w/2;
+			this.attached_obj.y = this.y - this.game.origin.y + this.h/2;
+		}
+		//debug( this.id/this.game.buttons.length );
+	},
+	render: function( ctx ) {
+		ctx.beginPath();
+		ctx.lineWidth = 1;
+		ctx.lineCap = 'square';
+		if( this.selected )
+			ctx.strokeStyle = 'rgba(255,50,50,1)';
+		else
+			ctx.strokeStyle = 'rgba(255,255,255,1)';
+		var locx = this.x;
+		var locy = this.y;
+		ctx.moveTo(locx-0.5, locy-0.5);
+		ctx.lineTo(locx+0.5+this.w, locy-0.5);
+		ctx.lineTo(locx+0.5+this.w, locy+0.5+this.h);
+		ctx.lineTo(locx-0.5, locy+0.5+this.h);
+		ctx.lineTo(locx-0.5, locy-0.5);
+		ctx.stroke();
+	}
+});
+
 
 var Gun = $.inherit( Obj, {
 	__constructor : function( game ){
@@ -383,6 +463,14 @@ var HSGame = $.inherit( LSGame, {
 		if( this.gamemode=="editor" ) {
 			// Editor mode
 			$("#hs_canvas").bind( "click_in_play", {game:this}, this.editClick );
+			var types = [1,2,3,4,5, 10, 11, 20, 30, 50];
+			this.buttons_area = [ new Point( 20, 20 ), new Point( 140, 300 ) ];
+			this.buttons = [];
+			for( i in types ) {
+				var b = new Button( this, types[i] );
+				this.buttons.push( b );
+				this.addObj( b );
+			}
 		} else {
 			this.addObj( new Gun( this ) );
 		}
@@ -493,9 +581,9 @@ var HSGame = $.inherit( LSGame, {
 	setLevel : function( lvl ) { this.level = lvl; },
 	
 	addObj : function( obj ) {
-		if( obj.role=="coin" && obj.ind>game.max_coins-game.x_coins*2 ) {
+		if( obj.role=="coin" && obj.ind>this.max_coins-this.x_coins*2 ) {
 			// If too low, loose
-			game.loose();
+			this.loose();
 			return false;
 		}
 		// Set the level index of this object here
@@ -513,7 +601,7 @@ var HSGame = $.inherit( LSGame, {
 	getIndex : function( o ) {
 		// Return level index from Point
 		p = new Point( o.x, o.y );
-		//p.x -= this.coin_w/3;
+		p.x -= this.coin_w/4;
 		p.y -= this.coin_h/2;
 		//var yind = Math.floor( p.y/(this.coin_h*0.48) );
 		var yind = Math.round( p.y/(this.coin_h*0.5) );
@@ -539,7 +627,17 @@ var HSGame = $.inherit( LSGame, {
 
 	editClick: function( e ) {
 		var g = e.data.game;
-		if( g.mouse.x<g.origin.x && g.mouse.y<340 ) {
+		if( g.mouse.x<g.buttons_area[1].x && g.mouse.y<g.buttons_area[1].y ) {
+			for( i in g.buttons ) {
+				if( g.buttons[i].clickInside( g.mouse ) ) {
+					for( j in g.buttons ) {
+						if( i!=j ) g.buttons[j].unSelect();
+					}
+					g.buttons[i].select();
+					break;
+				}
+			}
+			/*
 			// Selection
 			var color = Math.floor( Math.random()*5 ) + 1;
 			var p = new Point( g.cursor.x, g.cursor.y );
@@ -550,9 +648,9 @@ var HSGame = $.inherit( LSGame, {
 				this.x = p.x;
 				this.y = p.y;
 			}
-			//var c = new Breakable( p );
 			g.cursor.attached_obj = c;
 			g.addObj( g.cursor.attached_obj );
+			*/
 		} else {
 			if( g.cursor.attached_obj!=null ) {
 				//alert( game.cursor.attached_obj.img_name );
