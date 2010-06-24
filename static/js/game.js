@@ -673,6 +673,7 @@ var HSGame = $.inherit( LSGame, {
 			updateScores();
 		}
 		this.current_level = parseInt( level );
+		//debug( "Current level: "+this.current_level );
 		this.score = 0;
 		this.lives = 3;
 		this.state = "init";

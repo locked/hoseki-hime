@@ -101,8 +101,10 @@ def game(request):
     game_globals['gamemode'] = 'game'
     if request.user.is_authenticated():
         fbp = FacebookProfile.objects.get( user=request.user )
-        score, created = Score.objects.get_or_create( facebookprofile=fbp )
+        s, created = Score.objects.get_or_create( facebookprofile=fbp )
         game_globals['fbp'] = fbp
-        game_globals['score'] = score
+    else:
+        s = Score( score=0, level=0 )
+    game_globals['score'] = s
     return render_to_response(template, game_globals, context_instance=RequestContext(request))
 
