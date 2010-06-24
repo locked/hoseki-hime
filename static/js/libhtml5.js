@@ -246,9 +246,9 @@ var LSGame = $.inherit({
 			lasttime = curtime;
 			frame = 0;
 			//debug( fps );
-			ctx.fillStyle = "#fff";
-			ctx.font = '14px Arial';
 		}
+		ctx.fillStyle = "#fff";
+		ctx.font = '14px Arial';
 		ctx.fillText( fps+" fps", 10, 360 );
 
 		ctx.restore();

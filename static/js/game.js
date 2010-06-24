@@ -391,7 +391,7 @@ var Gold = $.inherit( AnimatedObj, {
 		this.__base( p, "coin.png", 28 );
 	},
 	collide : function( color ) {
-		game.score += 500;
+		game.scoreUp( 500 );
 		game.delObj( this );
 	}
 });
@@ -563,7 +563,7 @@ var CoinObj = $.inherit( LevelObj, {
 				}
 			}
 		}
-		game.score += 10;
+		game.scoreUp( 10 );
 	},
 	role : function(){
 		return this.role;
@@ -600,6 +600,16 @@ var GunCoin = $.inherit( CoinObj, {
 	},
 });
 
+function updateScores() {
+	$.getJSON( "/himesama/scores", function(json) {
+		/*var scores = [];
+		for( i in json ) {
+			scores.push( json[i] )
+		}*/
+		var table = "<table width='100%'><tr><th>user</th><th>score</th><th>level</th></tr>";
+		$("#hs_scores_inner").html( table+"<tr>"+json.join( "</tr><tr>" )+"</tr></table>" );
+	});
+}
 
 var HSGame = $.inherit( LSGame, {
 	__constructor : function( canvas, gamemode, level, x_coins, y_coins ){
@@ -630,20 +640,33 @@ var HSGame = $.inherit( LSGame, {
 			//this.addObj( new Gun( this ) );
 			this.gun = new Gun( this );
 			this.gun.img = this.preloadImage( this.gun.img_name );
+			setInterval( updateScores, 50000 );
+			updateScores();
 		}
 		this.current_level = level;
 		this.score = 0;
 		this.lives = 3;
 		this.state = "init";
 	},
+	scoreUp : function( pts ) {
+		this.score += pts;
+		var url = "/himesama/score/"+parseInt(this.score)+"/"+parseInt(this.current_level);
+		//alert( url );
+		$.getJSON( url, function(json) {
+			//alert( json );
+			// Nothing yet
+		});
+	},
 	drawBefore : function( ctx ) {
 		if( this.gun )
 			this.gun.doAnim();
+		this.__base( ctx );
 	},
 	drawAfter : function( ctx ) {
 		//debug( this.gun );
 		if( this.gun )
 			this.gun.render( ctx );
+		this.__base( ctx );
 	},
 	drawScreen : function() {
 		ctx.font = '16px Arial';
@@ -723,7 +746,7 @@ var HSGame = $.inherit( LSGame, {
 	},
 	loadLevel : function() {
 		var level = this.current_level;
-		$.getJSON( "/r5/himesama/level/"+level+"/load", function (json) {
+		$.getJSON( "/himesama/level/"+level+"/load", function (json) {
 			game.levels[json.level] = json.elements;
 			game.current_level = json.level;
 			game.initLevel();
@@ -852,7 +875,7 @@ function saveLevel() {
 		elts.push( elt );
 	}
 	var data = { 'elements': elts.join( "," ) };
-	$.getJSON( "/r5/himesama/level/"+game.current_level+"/save", data, function (json) {
+	$.getJSON( "/himesama/level/"+game.current_level+"/save", data, function (json) {
 		alert( json['result'] );
 	} );
 }

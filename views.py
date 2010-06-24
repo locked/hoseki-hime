@@ -7,6 +7,9 @@ from django.template import RequestContext
 from django.utils import html, translation, simplejson
 import os,sys
 
+from facebookconnect.models import FacebookProfile
+from himesama.models import Score
+
 cur_path = sys.path[0]
 level_filename = cur_path+"/r5/himesama"+"/world.levels"
 x_coins = 17
@@ -61,6 +64,28 @@ def level(request, level, action):
     msg = { 'level': int(level), 'elements':elements, 'result': 'OK' }
     return HttpResponse( simplejson.dumps( msg ) )
 
+def scores(request):
+    ss = Score.objects.all().order_by('score')
+    scores = []
+    for s in ss:
+        scores.append( "<td>%s</td><td>%s</td><td>%s</td>" % (s.facebookprofile.user.username, str(s.score), str(s.level) ) )
+        #scores.append( "user:"+s.facebookprofile.user.username+" score:"+str(s.score)+" level:"+str(s.level) )
+    return HttpResponse( simplejson.dumps( scores ) )
+
+def score(request, score, level):
+    if request.user.is_authenticated():
+        fbp = FacebookProfile.objects.get( user=request.user )
+        s, created = Score.objects.get_or_create( facebookprofile=fbp )
+        #if not created:
+        if s.score is None or s.score<score:
+            s.score = score
+        if s.level is None or s.level<level:
+            s.level = level
+        #else:
+        #    score.score = score
+        #    score.level = level
+        s.save()
+    return HttpResponse( "OK" )
 
 def menu(request):
     template = "hs_menu.html"
@@ -75,5 +100,10 @@ def editor(request, level=0):
 def game(request):
     template = "hs_game.html"
     game_globals['gamemode'] = 'game'
+    if request.user.is_authenticated():
+        fbp = FacebookProfile.objects.get( user=request.user )
+        score, created = Score.objects.get_or_create( facebookprofile=fbp )
+        game_globals['fbp'] = fbp
+        game_globals['score'] = score
     return render_to_response(template, game_globals, context_instance=RequestContext(request))
 
