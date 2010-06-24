@@ -59,10 +59,11 @@ var Point = $.inherit({
 
 
 var Obj = $.inherit( Point, {
-	__constructor : function( p, img_name ){
+	__constructor : function( game, p, img_name ){
 		this.x = p.x;
 		this.y = p.y;
 		this.img_name = img_name;
+		this.game = game;
 	},
 	role : function(){
 		return "obj";
@@ -81,10 +82,11 @@ var Obj = $.inherit( Point, {
 var Cursor = $.inherit( Point, {
 	__constructor: function( game ) {
 		this.attached_obj = null;
+		this.game = game;
 	},
-	doAnim: function( game ) {
-		this.x = game.mouse.x - game.origin.x;
-		this.y = game.mouse.y - game.origin.y;
+	doAnim: function() {
+		this.x = this.game.mouse.x - this.game.origin.x;
+		this.y = this.game.mouse.y - this.game.origin.y;
 		if( this.attached_obj ) {
 			this.attached_obj.x = this.x;
 			this.attached_obj.y = this.y;
@@ -122,8 +124,8 @@ var LSGame = $.inherit({
 		// Game objects
 		this.objs = [];
 		this.explosions = [];
-		this.cursor = new Cursor();
-		this.mouse = new Point();
+		this.cursor = new Cursor( this );
+		this.mouse = new Point( 430, 100 );
 
 		// Images arrays
 		this.all_imgs = [];
@@ -135,14 +137,18 @@ var LSGame = $.inherit({
 		this.loadedAudioElements = 0;
 		this.toloadAudioElements = 0;
 
-		$('#hs_canvas').mousemove(function(e) {
-			game.mouse.x = e.pageX - $(this).parent().get(0).offsetLeft;
-			game.mouse.y = e.pageY - $(this).parent().get(0).offsetTop;
-			//game.debug( game.mouse.info() );
-		});
-		$("#hs_canvas").bind( "click", {o:this}, this.click );
-		$("#hs_canvas").dblclick( this.dblclick );
-		$("#hs_canvas").get(0).onselectstart = function () { return false; };
+		this.canvas_element = $('#'+canvas);
+		this.canvas_element.bind( "mousemove", {o:this}, this.mousemove );
+		this.canvas_element.bind( "click", {o:this}, this.click );
+		this.canvas_element.bind( "dblclick", {o:this}, this.dblclick );
+		//this.canvas_element.dblclick( this.dblclick );
+		// Disable double click selection:
+		this.canvas_element.get(0).onselectstart = function () { return false; };
+	},
+	mousemove : function( e ) {
+		var o = e.data.o;	// o is 'this' object, passed as argument because it's an event callback
+		o.mouse.x = e.pageX - o.canvas_element.parent().get(0).offsetLeft;
+		o.mouse.y = e.pageY - o.canvas_element.parent().get(0).offsetTop;
 	},
 	drawScreen : function() {
 	},
@@ -178,7 +184,7 @@ var LSGame = $.inherit({
 	start : function() {
 		// Start loop, at around 30 FPS
 		//setInterval( animAll, 24 );
-		setInterval( drawAll, 33 );
+		setInterval( drawAll, 29 );
 	},
 	drawAfter : function( ctx ) {
 	},
@@ -196,9 +202,9 @@ var LSGame = $.inherit({
 	animAll : function() {
 		for( var id in this.objs ) {
 			if( this.objs[id] )
-				this.objs[id].doAnim( game );
+				this.objs[id].doAnim();
 		}
-		this.cursor.doAnim( game );
+		this.cursor.doAnim();
 	},
 	drawAll : function() {
 		/**
@@ -214,14 +220,14 @@ var LSGame = $.inherit({
 			this.animAll();
 			/*
 			for( var id in this.explosions ) {
-				this.explosions[id].doAnim( game );
+				this.explosions[id].doAnim();
 			}
 			*/
 			for( var id in this.objs ) {
 				if( this.objs[id] ) {
 					//if( this.objs[id].ind==110 )
 					//	debug( "HEYYYY" );
-					//this.objs[id].doAnim( game );
+					//this.objs[id].doAnim();
 					this.objs[id].render( ctx );
 				}
 			}
@@ -236,7 +242,7 @@ var LSGame = $.inherit({
 
 		this.drawAfter( ctx );
 		
-		//this.cursor.doAnim( game );
+		//this.cursor.doAnim();
 		this.cursor.render( ctx );
 
 		frame++;

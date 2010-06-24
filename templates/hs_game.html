@@ -34,7 +34,7 @@
 {% block scripts %}
   <script type="text/javascript">
 $(document).ready( function() {
-	game = new HSGame( 'hs_board', '{{ gamemode }}', {{level}}, {{x_coins}}, {{y_coins}} );
+	game = new HSGame( 'hs_canvas', '{{ gamemode }}', '{{ score.level }}', {{x_coins}}, {{y_coins}} );
 	snds['win'] = game.preloadSound( "win.ogg" );
 	snds['loose'] = game.preloadSound( "loose.ogg" );
 	snds['free'] = game.preloadSound( "dropgood.ogg" );
