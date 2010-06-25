@@ -92,9 +92,9 @@ var Button = $.inherit( Obj, {
 
 var Gun = $.inherit( Obj, {
 	__constructor : function( game ) {
-		this.__base( game, new Point( 315, 580 ), "gun_tube.png" );
 		this.w = 43;
 		this.h = 151;
+		this.__base( game, new Point( 315, 580 ), "gun_tube.png" );
 		this.coin = null;
 		this.updateAngle();
 		this.newCoin();
@@ -112,7 +112,19 @@ var Gun = $.inherit( Obj, {
 		var decx = getOppose( angle, speed );
 		var v = new Point( decx, -decy );
 		o.coin.v = v;
-		snds['fire'].play();
+		//debug( "currentTime: "+$(snds['fire']).attr('currentTime') );
+		//debug( "duration: "+$(snds['fire']).attr('duration') );
+		//debug( "state: "+snds['fire'].ended );
+		//$(snds['fire']).attr('loop',true);
+		//snds['fire'].currentTime = 0.00001;
+		if( snds['fire'].currentTime==0 || snds['fire'].currentTime==snds['fire'].duration ) {
+			snds['fire'].play();
+			//debug("fire ONE");
+		} else {
+			snds['fire2'].play();
+			//debug("fire TWO");
+		}
+		
 		o.newCoin();
 	},
 	newCoin: function() {
@@ -131,8 +143,7 @@ var Gun = $.inherit( Obj, {
 		ss.x += decx;
 		ss.y -= decy;
 		//this.game.debug( "angle: " + this.angle + "x:" + ss.x + " y:"+ ss.y + " decx:" + decx + " decy:" + decy );
-		this.coin.x = ss.x;
-		this.coin.y = ss.y;
+		this.coin.update( ss );
 	},
 	updateAngle : function(){
 		//var p2 = this.game.cursor;
@@ -149,14 +160,11 @@ var Gun = $.inherit( Obj, {
 		//game.debug( "angle:" + this.angle.toPrecision(2) + " angle raw:"+ getAngle( this, p2 ).toPrecision(2) );
 	},
 	render : function( ctx ){
-		var a = this.angle;
-		ctx.translate( this.x+game.origin.x, this.y+game.origin.y );
-		//ctx.translate( this.x, this.y );
-		ctx.rotate( a );
-		ctx.drawImage( this.img, -Math.floor(this.w/2), -(this.h-40) );
-		ctx.rotate( -a );
-		ctx.translate( -this.x-game.origin.x, -this.y-game.origin.y );
-		//ctx.translate( -this.x, -this.y );
+		ctx.translate( this.x+this.game.origin.x, this.y+this.game.origin.y );
+		ctx.rotate( this.angle );
+		ctx.drawImage( this.img, -this.wh, -(this.h-40) );
+		ctx.rotate( -this.angle );
+		ctx.translate( -this.x-this.game.origin.x, -this.y-this.game.origin.y );
 	},
 	role : function(){
 		return "gun";
@@ -269,13 +277,11 @@ var LevelObj = $.inherit( Obj, {
 //
 var AnimatedObj = $.inherit( LevelObj, {
 	__constructor : function( game, p, img_name, max_frame ){
-		this.__base( game, p, img_name );
 		if( ! this.w )
 			this.w = 25;
 		if( ! this.h )
 			this.h = 25;
-		this.wh = Math.floor(this.w/2);
-		this.hh = Math.floor(this.h/2);
+		this.__base( game, p, img_name );
 		this.frame = 0;
 		this.max_frame = max_frame;
 	},
@@ -285,7 +291,7 @@ var AnimatedObj = $.inherit( LevelObj, {
 			this.frame = 0;
 	},
 	render : function( ctx ) {
-		ctx.drawImage( this.img,  Math.floor(this.frame)*this.w, 0, this.w, this.h,  Math.floor(this.x-this.wh)+this.game.origin.x, Math.floor(this.y-this.hh)+this.game.origin.y, this.w, this.h );
+		ctx.drawImage( this.img,  Math.floor(this.frame)*this.w, 0, this.w, this.h, this.drawx, this.drawy, this.w, this.h );
 	}
 });
 
@@ -304,9 +310,9 @@ var Breakable = $.inherit( AnimatedObj, {
 // Unbreakable stone
 var Unbreakable = $.inherit( AnimatedObj, {
 	__constructor : function( game, p ){
-		this.__base( game, p, "wall.png", 5 );
 		this.w = 25;
 		this.h = 23;
+		this.__base( game, p, "wall.png", 5 );
 	},
 	collide : function( color ) {
 		this.addNewNeighbour( 2, color );
@@ -320,9 +326,9 @@ var Unbreakable = $.inherit( AnimatedObj, {
 var Wall = $.inherit( LevelObj, {
 	__constructor : function( game, p ){
 		var img_name = "stone"+rand(1,5)+".png";
-		this.__base( game, p, img_name, 0 );
 		this.w = 23;
 		this.h = 23;
+		this.__base( game, p, img_name, 0 );
 	},
 	collide : function( color ) {
 		//
@@ -397,9 +403,9 @@ var Gold = $.inherit( AnimatedObj, {
 
 var Hime = $.inherit( LevelObj, {
 	__constructor : function( game, p ){
-		this.__base( game, p, "hime.png" );
 		this.w = 57;
 		this.h = 67;
+		this.__base( game, p, "hime.png" );
 		this.frame = 0;
 		this.animation = 0;
 		this.animation_freq = Math.floor(Math.random()*60)+30;
@@ -434,7 +440,7 @@ var Hime = $.inherit( LevelObj, {
 		}
 	},
 	render : function( ctx ) {
-		ctx.drawImage( this.img,  Math.floor(this.frame)*this.w, 0, this.w, this.h,  Math.floor(this.x-this.w/2)+this.game.origin.x, Math.floor(this.y-this.h/2)+this.game.origin.y, this.w, this.h );
+		ctx.drawImage( this.img,  Math.floor(this.frame)*this.w, 0, this.w, this.h,  Math.floor(this.x-this.wh)+this.game.origin.x, Math.floor(this.y-this.hh)+this.game.origin.y, this.w, this.h );
 		//ctx.drawImage( this.img, Math.floor(this.x-this.w/2), Math.floor(this.y-this.h/2) );
 		ctx.fillStyle = "#000";
 		ctx.font = 'arial 10px';
@@ -448,9 +454,9 @@ var CoinObj = $.inherit( LevelObj, {
 	__constructor : function( game, p, v, color, role ){
 		if( !( color>0 && color<6 ) )
 			color = 1;
-		this.__base( game, p, "el"+color+".png" );
 		this.w = 25;
 		this.h = 23;
+		this.__base( game, p, "el"+color+".png" );
 		this.v = v;
 		this.color = color;
 		this.role = role;
@@ -474,6 +480,7 @@ var CoinObj = $.inherit( LevelObj, {
 			if( this.y-this.h/2<0 ) {
 				this.v.y = -this.v.y;
 			}
+			this.update( this );
 			this.lastind = this.ind;
 			// 2 position behind due to miscalculations
 			this.ind = this.game.getIndex( new Point( this.x-this.v.x*2, this.y-this.v.y*2 ) );

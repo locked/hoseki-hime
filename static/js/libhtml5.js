@@ -60,16 +60,29 @@ var Point = $.inherit({
 
 var Obj = $.inherit( Point, {
 	__constructor : function( game, p, img_name ){
-		this.x = p.x;
-		this.y = p.y;
+		//this.x = p.x;
+		//this.y = p.y;
 		this.img_name = img_name;
 		this.game = game;
+		this.wh = Math.floor(this.w/2);
+		this.hh = Math.floor(this.h/2);
+		this.update( p );
+		//this.drawx = Math.round( this.x-this.wh+this.game.origin.x );
+		//this.drawy = Math.round( this.y-this.hh+this.game.origin.y );
+	},
+	update : function( p ){
+		this.x = p.x;
+		this.y = p.y;
+		this.drawx = Math.round( this.x-this.wh+this.game.origin.x );
+		this.drawy = Math.round( this.y-this.hh+this.game.origin.y );
 	},
 	role : function(){
 		return "obj";
 	},
 	render : function( ctx ) {
-		ctx.drawImage( this.img, Math.round(this.x-Math.round(this.w/2))+game.origin.x, Math.floor(this.y-this.h/2)+game.origin.y, this.w, this.h );
+		//ctx.drawImage( this.img, Math.round(this.x-Math.round(this.w/2))+game.origin.x, Math.floor(this.y-this.h/2)+game.origin.y, this.w, this.h );
+		//ctx.drawImage( this.img, Math.round( this.x-this.wh+this.game.origin.x ), Math.round( this.y-this.hh+this.game.origin.y ), this.w, this.h );
+		ctx.drawImage( this.img, this.drawx, this.drawy, this.w, this.h );
 		if( this.ind && debug_mode ) {
 			ctx.fillStyle = "#fff";
 			ctx.font = 'arial 5px';
@@ -103,11 +116,14 @@ var Cursor = $.inherit( Point, {
 
 
 var logs = [];
-debug = function( s ) {
-	//$("#debug").append( "DBG: "+txt+"\n" );
-	logs.push( s );
-	if( logs.length>80 )
-		logs.splice( 0, 1 );
+debug = function( s, clear ) {
+	if( clear ) {
+		logs = s;
+	} else {
+		logs.push( s );
+		if( logs.length>80 )
+			logs.splice( 0, 1 );
+	}
 	$("#debug").html( logs.join( "<br>" ) ).get(0).scrollTop = $("#debug").get(0).scrollHeight;
 }
 
@@ -116,7 +132,10 @@ var LSGame = $.inherit({
 	__constructor : function( canvas ) {
 		//this.canvas = canvas;
 		this.ctx = document.getElementById( "hs_canvas" ).getContext('2d');
-		this.logs = [];
+		//this.logs = [];
+		this.times_init = { 'render':[], 'animAll':[], 'clearRect':[], 'restore':[], 'drawAfter':[], 'save':[], 'fps':[] };
+		this.times = this.times_init;
+		this.times_count = 0;
 		this.origin = new Point( 152, 10 );
 		
 		this.media_path = "/media/himesama";
@@ -199,6 +218,12 @@ var LSGame = $.inherit({
 		// Call an external debug functional for the sake of simplicity
 		debug( txt );
 	},
+	timeStart : function() {
+		this.time_start = new Date();
+	},
+	timeEnd : function( name ) {
+		this.times[name].push( Math.floor( ( (new Date()).getTime()-this.time_start)*1000) );
+	},
 	animAll : function() {
 		for( var id in this.objs ) {
 			if( this.objs[id] )
@@ -211,18 +236,25 @@ var LSGame = $.inherit({
 		 * Animation loop
 		 */
 		ctx = this.ctx;
+		this.timeStart();
 		ctx.clearRect(0,0,800,600);
+		this.timeEnd('clearRect');
+		this.timeStart();
 		ctx.save();
+		this.timeEnd('save');
 
 		this.drawBefore( ctx );
 
 		if( this.state=="play" ) {
+			this.timeStart();
 			this.animAll();
+			this.timeEnd('animAll');
 			/*
 			for( var id in this.explosions ) {
 				this.explosions[id].doAnim();
 			}
 			*/
+			this.timeStart();
 			for( var id in this.objs ) {
 				if( this.objs[id] ) {
 					//if( this.objs[id].ind==110 )
@@ -231,6 +263,7 @@ var LSGame = $.inherit({
 					this.objs[id].render( ctx );
 				}
 			}
+			this.timeEnd( 'render' );
 			/*
 			for( var id in this.explosions ) {
 				this.explosions[id].render( ctx );
@@ -240,24 +273,48 @@ var LSGame = $.inherit({
 			this.drawScreen();
 		}
 
+		this.timeStart();
 		this.drawAfter( ctx );
+		this.timeEnd( 'drawAfter' );
 		
 		//this.cursor.doAnim();
 		this.cursor.render( ctx );
-
-		frame++;
-		if( frame%50==0 ) {
-			var curtime = (new Date()).getTime();
-			fps = Math.floor( frame/((curtime-lasttime)/1000) );
-			lasttime = curtime;
-			frame = 0;
-			//debug( fps );
+		
+		if( debug_mode ) {
+			frame++;
+			if( frame%50==0 ) {
+				var curtime = (new Date()).getTime();
+				fps = Math.floor( frame/((curtime-lasttime)/1000) );
+				lasttime = curtime;
+				frame = 0;
+				//debug( fps );
+			}
+			this.timeStart();
+			ctx.fillStyle = "#fff";
+			ctx.font = '14px Arial';
+			ctx.fillText( fps+" fps", 10, 360 );
+			this.timeEnd( 'fps' );
 		}
-		ctx.fillStyle = "#fff";
-		ctx.font = '14px Arial';
-		ctx.fillText( fps+" fps", 10, 360 );
 
+		this.timeStart();
 		ctx.restore();
+		this.timeEnd( 'restore' );
+		
+		this.times_count++;
+		if( this.times_count>20 ) {
+			times_avg = [];
+			for( i in this.times ) {
+				var v = 0;
+				for( j in this.times[i] ) {
+					v += this.times[i][j];
+				}
+				var avg = Math.floor( v/this.times[i].length );
+				times_avg.push( i+": "+avg );
+			}
+			debug( times_avg, true );
+			this.times_count = 0;
+			this.times = this.times_init;
+		}
 	},
 	loadImages : function() {
 		//alert( imagesLoaded+" >= "+imagesToPreload );

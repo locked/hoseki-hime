@@ -100,9 +100,15 @@ def game(request):
     template = "hs_game.html"
     game_globals['gamemode'] = 'game'
     if request.user.is_authenticated():
-        fbp = FacebookProfile.objects.get( user=request.user )
-        s, created = Score.objects.get_or_create( facebookprofile=fbp )
-        game_globals['fbp'] = fbp
+        try:
+            fbp = FacebookProfile.objects.get( user=request.user )
+            s, created = Score.objects.get_or_create( facebookprofile=fbp )
+            if s.score is None: s.score = 0
+            if s.level is None: s.level = 0
+            s.save()
+            game_globals['fbp'] = fbp
+        except:
+            s = Score( score=0, level=0 )
     else:
         s = Score( score=0, level=0 )
     game_globals['score'] = s
