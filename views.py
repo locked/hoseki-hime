@@ -65,7 +65,7 @@ def level(request, level, action):
     return HttpResponse( simplejson.dumps( msg ) )
 
 def scores(request):
-    ss = Score.objects.all().order_by('score')
+    ss = Score.objects.all().order_by('-score')
     scores = []
     for s in ss:
         scores.append( "<td>%s</td><td>%s</td><td>%s</td>" % (s.facebookprofile.user.username, str(s.score), str(s.level) ) )
@@ -83,12 +83,14 @@ def score(request, score, level):
         if (s.level is None) or (s.level<level):
             s.level = level
         s.save()
-    return HttpResponse( "OK %d %d " % (s.score, score) )
+    return scores(request)
+    #return HttpResponse( "OK %d %d " % (s.score, score) )
 
 def menu(request):
     template = "hs_menu.html"
     return render_to_response(template, {}, context_instance=RequestContext(request))
 
+@login_required
 def editor(request, level=0):
     template = "hs_game.html"
     game_globals['gamemode'] = 'editor'
@@ -96,7 +98,7 @@ def editor(request, level=0):
     game_globals['score'] = s
     return render_to_response(template, game_globals, context_instance=RequestContext(request))
 
-def game(request):
+def game(request, level=None):
     template = "hs_game.html"
     game_globals['gamemode'] = 'game'
     if request.user.is_authenticated():
@@ -112,5 +114,9 @@ def game(request):
     else:
         s = Score( score=0, level=0 )
     game_globals['score'] = s
+    game_level = s.level
+    if level is not None or game_level is None:
+        game_level = int(level)
+    game_globals['level'] = game_level
     return render_to_response(template, game_globals, context_instance=RequestContext(request))
 

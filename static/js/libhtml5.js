@@ -23,6 +23,7 @@ var lasttime = 0;
 var frame = 0;
 
 var debug_mode = false;
+var profiling_mode = false;
 
 var Point = $.inherit({
 	__constructor : function( x, y ){
@@ -101,9 +102,12 @@ var Cursor = $.inherit( Point, {
 		this.x = this.game.mouse.x - this.game.origin.x;
 		this.y = this.game.mouse.y - this.game.origin.y;
 		if( this.attached_obj ) {
-			this.attached_obj.x = this.x;
-			this.attached_obj.y = this.y;
-			this.attached_obj.doAnim();
+			if( this.game.mouse.x<this.game.buttons_area[1].x && this.game.mouse.y<this.game.buttons_area[1].y ) {
+				// Hide object
+			} else {
+				this.attached_obj.update( this );
+				this.attached_obj.doAnim();
+			}
 		}
 	},
 	render : function( ctx ) {
@@ -300,20 +304,22 @@ var LSGame = $.inherit({
 		ctx.restore();
 		this.timeEnd( 'restore' );
 		
-		this.times_count++;
-		if( this.times_count>20 ) {
-			times_avg = [];
-			for( i in this.times ) {
-				var v = 0;
-				for( j in this.times[i] ) {
-					v += this.times[i][j];
+		if( profiling_mode ) {
+			this.times_count++;
+			if( this.times_count>20 ) {
+				times_avg = [];
+				for( i in this.times ) {
+					var v = 0;
+					for( j in this.times[i] ) {
+						v += this.times[i][j];
+					}
+					var avg = Math.floor( v/this.times[i].length );
+					times_avg.push( i+": "+avg );
 				}
-				var avg = Math.floor( v/this.times[i].length );
-				times_avg.push( i+": "+avg );
+				debug( times_avg, true );
+				this.times_count = 0;
+				this.times = this.times_init;
 			}
-			debug( times_avg, true );
-			this.times_count = 0;
-			this.times = this.times_init;
 		}
 	},
 	loadImages : function() {

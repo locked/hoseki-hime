@@ -34,11 +34,11 @@ var Button = $.inherit( Obj, {
 			this.game.addObj( this.attached_obj );
 		}
 	},
-	unSelect: function() {
+	unSelect : function() {
 		this.selected = false;
 		//debug( "test remove element: "+this.game.cursor.attached_obj+" / "+this.selected );
 	},
-	select: function() {
+	select : function() {
 		// Selection
 		this.selected = true;
 		if( this.attached_obj ) {
@@ -50,7 +50,7 @@ var Button = $.inherit( Obj, {
 			this.game.newCursorObj( this.attached_obj );
 		}
 	},
-	clickInside: function( mouse ) {
+	clickInside : function( mouse ) {
 		if( mouse.x>this.x && mouse.x<this.x+this.w ) {
 			if( mouse.y>this.y && mouse.y<this.y+this.h ) {
 				//if( this.selected ) this.unSelect();
@@ -65,8 +65,8 @@ var Button = $.inherit( Obj, {
 		this.x = (this.id % 2)*this.w*margin + this.game.buttons_area[0].x;
 		this.y = Math.floor( (this.id/this.game.buttons.length) * this.h * margin * (this.game.buttons.length/2) ) + this.game.buttons_area[0].y;
 		if( this.attached_obj ) {
-			this.attached_obj.x = this.x - this.game.origin.x + this.w/2;
-			this.attached_obj.y = this.y - this.game.origin.y + this.h/2;
+			// In the board, update position
+			this.attached_obj.update( new Point( this.x - this.game.origin.x + this.w/2, this.y - this.game.origin.y + this.h/2 ) );
 		}
 		//debug( this.id/this.game.buttons.length );
 	},
@@ -315,11 +315,20 @@ var Unbreakable = $.inherit( AnimatedObj, {
 		this.__base( game, p, "wall.png", 5 );
 	},
 	collide : function( color ) {
-		this.addNewNeighbour( 2, color );
+		this.addNewNeighbour( 3, color );
 	},
 	explode: function() {
 		// Do not break :)
 	}
+});
+
+
+var Eraser = $.inherit( LevelObj, {
+	__constructor : function( game, p ){
+		this.w = 22;
+		this.h = 22;
+		this.__base( game, p, "eraser.png", 0 );
+	},
 });
 
 
@@ -331,7 +340,7 @@ var Wall = $.inherit( LevelObj, {
 		this.__base( game, p, img_name, 0 );
 	},
 	collide : function( color ) {
-		//
+		this.addNewNeighbour( 2, color );
 	}
 });
 
@@ -637,14 +646,13 @@ var GunCoin = $.inherit( CoinObj, {
 	},
 });
 
-function updateScores() {
+function updateScoresRpc() {
 	$.getJSON( "/himesama/scores", function(json) {
+		game.updateScores( json );
 		/*var scores = [];
 		for( i in json ) {
 			scores.push( json[i] )
 		}*/
-		var table = "<table width='100%'><tr><th>user</th><th>score</th><th>level</th></tr>";
-		$("#hs_scores_inner").html( table+"<tr>"+json.join( "</tr><tr>" )+"</tr></table>" );
 	});
 }
 
@@ -665,8 +673,8 @@ var HSGame = $.inherit( LSGame, {
 		if( this.gamemode=="editor" ) {
 			// Editor mode
 			$("#hs_canvas").bind( "click_in_play", {game:this}, this.editClick );
-			var types = [1,2,3,4,5, 10, 11, 20, 30, 40, 45, 50];
-			this.buttons_area = [ new Point( 20, 20 ), new Point( 140, 300 ) ];
+			var types = [1,2,3,4,5, 10, 11, 20, 30, 40, 45, 50, 255];
+			this.buttons_area = [ new Point( 20, 20 ), new Point( 140, 330 ) ];
 			this.buttons = [];
 			for( i in types ) {
 				var b = new Button( this, types[i] );
@@ -676,8 +684,8 @@ var HSGame = $.inherit( LSGame, {
 		} else {
 			this.gun = new Gun( this );
 			this.gun.img = this.preloadImage( this.gun.img_name );
-			setInterval( updateScores, 50000 );
-			updateScores();
+			setInterval( updateScoresRpc, 50000 );
+			updateScoresRpc();
 		}
 		this.current_level = parseInt( level );
 		//debug( "Current level: "+this.current_level );
@@ -689,7 +697,7 @@ var HSGame = $.inherit( LSGame, {
 		this.current_level++;
 		var url = "/himesama/score/"+parseInt(this.score)+"/"+parseInt(this.current_level);
 		$.getJSON( url, function(json) {
-			// Nothing yet
+			this.updateScores( json );
 		});
 	},
 	scoreUp : function( pts ) {
@@ -697,9 +705,12 @@ var HSGame = $.inherit( LSGame, {
 		var url = "/himesama/score/"+parseInt(this.score)+"/"+parseInt(this.current_level);
 		//alert( url );
 		$.getJSON( url, function(json) {
-			//alert( json );
-			// Nothing yet
+			this.updateScores( json );
 		});
+	},
+	updateScores : function( json ) {
+		var table = "<table width='100%'><tr><th>user</th><th>score</th><th>level</th></tr>";
+		$("#hs_scores_inner").html( table+"<tr>"+json.join( "</tr><tr>" )+"</tr></table>" );
 	},
 	drawBefore : function( ctx ) {
 		if( this.gun )
@@ -783,6 +794,9 @@ var HSGame = $.inherit( LSGame, {
 			c = new Scatter( this, p );
 		} else if( t==50 ) {
 			c = new Hime( this, p );
+		} else if( t==255 ) {
+			// Special editor 'eraser' tool
+			c = new Eraser( this, p );
 		}
 		if( c )
 			c.type = t;
@@ -873,6 +887,7 @@ var HSGame = $.inherit( LSGame, {
 	editClick: function( e ) {
 		var g = e.data.game;
 		if( g.mouse.x<g.buttons_area[1].x && g.mouse.y<g.buttons_area[1].y ) {
+			// Left section
 			for( i in g.buttons ) {
 				if( g.buttons[i].clickInside( g.mouse ) ) {
 					for( j in g.buttons ) {
@@ -883,11 +898,20 @@ var HSGame = $.inherit( LSGame, {
 				}
 			}
 		} else {
+			// In the board
 			if( g.cursor.attached_obj!=null ) {
-				//alert( game.cursor.attached_obj.img_name );
-				g.level[g.cursor.attached_obj.ind] = g.cursor.attached_obj;
-				//g.cursor.attached_obj = null;
-				g.newCursorObj( g.cursor.attached_obj );
+				if( g.cursor.attached_obj.type==255 ) {
+					// If eraser tool
+					var ind = g.cursor.attached_obj.ind;
+					g.delObj( g.level[ind] );
+					delete g.level[ind];
+					g.level[ind] = null;
+				} else {
+					//alert( game.cursor.attached_obj.img_name );
+					g.level[g.cursor.attached_obj.ind] = g.cursor.attached_obj;
+					//g.cursor.attached_obj = null;
+					g.newCursorObj( g.cursor.attached_obj );
+				}
 			}
 		}
 		return false;
@@ -900,8 +924,7 @@ var HSGame = $.inherit( LSGame, {
 		c.doAnim = function() {
 			this.ind = game.getIndex( this );
 			var p = game.getPosition( this.ind );
-			this.x = p.x;
-			this.y = p.y;
+			this.update( p );
 		}
 		this.cursor.attached_obj = c;
 		this.addObj( this.cursor.attached_obj );

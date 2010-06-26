@@ -34,7 +34,7 @@
 {% block scripts %}
   <script type="text/javascript">
 $(document).ready( function() {
-	game = new HSGame( 'hs_canvas', '{{ gamemode }}', '{{ score.level }}', {{x_coins}}, {{y_coins}} );
+	game = new HSGame( 'hs_canvas', '{{ gamemode }}', '{{ level }}', {{x_coins}}, {{y_coins}} );
 	snds['win'] = game.preloadSound( "win.ogg" );
 	snds['loose'] = game.preloadSound( "loose.ogg" );
 	snds['free'] = game.preloadSound( "dropgood.ogg" );
@@ -53,6 +53,7 @@ $(document).ready( function() {
 	snds['fire'].addEventListener( 'abort', function() {debug("abort");}, false );
 	snds['fire'].addEventListener( 'seeked', function() {debug("seeked");}, false );
 	*/
+	//images = ["wall.png""stone1.png""stone2.png""stone3.png""stone4.png""stone5.png""hime.png""coin.png""breakable.png""el1.png""el2.png""el3.png""el4.png""el5.png""white_stone.png""bomb.png""eraser.png"];
 	game.preloadImage( "wall.png" );
 	game.preloadImage( "stone1.png" );
 	game.preloadImage( "stone2.png" );
@@ -69,6 +70,7 @@ $(document).ready( function() {
 	game.preloadImage( "el5.png" );
 	game.preloadImage( "white_stone.png" );
 	game.preloadImage( "bomb.png" );
+	game.preloadImage( "eraser.png" );
 	game.init();
 	game.loadLevel();
 } );
