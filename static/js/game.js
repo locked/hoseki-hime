@@ -697,7 +697,7 @@ var HSGame = $.inherit( LSGame, {
 		this.current_level++;
 		var url = "/himesama/score/"+parseInt(this.score)+"/"+parseInt(this.current_level);
 		$.getJSON( url, function(json) {
-			this.updateScores( json );
+			if( game ) game.updateScores( json );
 		});
 	},
 	scoreUp : function( pts ) {
@@ -705,7 +705,7 @@ var HSGame = $.inherit( LSGame, {
 		var url = "/himesama/score/"+parseInt(this.score)+"/"+parseInt(this.current_level);
 		//alert( url );
 		$.getJSON( url, function(json) {
-			this.updateScores( json );
+			if( game ) game.updateScores( json );
 		});
 	},
 	updateScores : function( json ) {

@@ -96,6 +96,7 @@ def editor(request, level=0):
     game_globals['gamemode'] = 'editor'
     s = Score( score=0, level=level )
     game_globals['score'] = s
+    game_globals['level'] = s.level
     return render_to_response(template, game_globals, context_instance=RequestContext(request))
 
 def game(request, level=None):
