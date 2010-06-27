@@ -284,9 +284,15 @@ var AnimatedObj = $.inherit( LevelObj, {
 		this.__base( game, p, img_name );
 		this.frame = 0;
 		this.max_frame = max_frame;
+		this.lastt = new Date();
 	},
 	doAnim : function() {
-		this.frame += 0.2;
+		var frametime = ((new Date()).getTime()-this.lastt)/40;
+		this.lastt = new Date();
+		if( !(frametime>1 && frametime<80) )
+			frametime = 0.1;
+		
+		this.frame += frametime;
 		if( this.frame>this.max_frame )
 			this.frame = 0;
 	},
@@ -379,7 +385,7 @@ var Scatter = $.inherit( AnimatedObj, {
 var Bomb = $.inherit( AnimatedObj, {
 	__constructor : function( game, p ){
 		this.w = 41;
-		this.h = 30;
+		this.h = 34;
 		this.__base( game, p, "bomb.png", 5 );
 	},
 	collide : function( color ) {
@@ -420,31 +426,66 @@ var Hime = $.inherit( LevelObj, {
 		this.animation_freq = Math.floor(Math.random()*60)+30;
 		this.max_frame = 11;
 		this.role = "hime";
+		this.state = "wait";
+		this.fly_maxframe = 100;
+		this.fly_frame = 0;
+		
+		// Bezier
+		this.C1 = new Point( 70-this.game.origin.x, 220-this.game.origin.y );	// End point
+		this.C4 = new Point( this.x, this.y );		// Hime point
+		var d = this.C4.x-this.C1.x;			// Distance
+		var dy = d/4;
+		var vx = Math.round(Math.random()*(d/2));
+		var v1 = (Math.round(Math.random()*1)==0?-1:1) * (Math.round(Math.random()*dy)+(dy/2));
+		this.C2 = new Point( this.C1.x+vx, this.C1.y+v1 );	// Randomized curve point for End point
+		this.C3 = new Point( this.C4.x-vx, this.C4.y-v1 );	// Randomized curve point for Hime point
 	},
 	collide : function( color ) {
+                this.game.level[this.ind] = null;
+		this.state = "fly";
+		snds['free'].play();
+	},
+	rescued : function( ctx ) {
 		var lvl = this.game.getLevel();
 		var hime_count = 0;
-                this.game.level[this.ind] = null;
 		for( var id in lvl ) {
 			if( lvl[id] && lvl[id].role=="hime" )
 				hime_count++;
 		}
-		this.game.delObj( this );
 		if( hime_count==0 ) {
-			//alert( hime_count );
 			snds['win'].play();
 			this.game.win();
-		} else
-			snds['free'].play();
+		}
+		this.game.delObj( this );
 	},
 	doAnim : function( ctx ) {
-		this.animation++;
-		if( this.animation>this.animation_freq ) {
-			this.frame+=0.4;
-			if( this.frame>this.max_frame ) {
-				this.frame = 0;
-				this.animation = 0;
-				this.animation_freq = Math.floor(Math.random()*60)+30;
+		var frametime = ((new Date()).getTime()-this.lastt)/80;
+		this.lastt = new Date();
+		if( !(frametime>0 && frametime<140) )
+			frametime = 0.4;
+		
+		if( this.state=="wait" ) {
+			this.animation++;
+			if( this.animation>this.animation_freq ) {
+				this.frame += frametime;
+				if( this.frame>this.max_frame ) {
+					this.frame = 0;
+					this.animation = 0;
+					this.animation_freq = Math.floor(Math.random()*60)+30;
+				}
+			}
+		} else if( this.state=="fly" ) {
+			//this.fly_frame +=0.4;
+			this.fly_frame += frametime*4;
+			//debug( "frame time: "+frametime+" fly_frame:"+this.fly_frame );
+			if( this.fly_frame>this.fly_maxframe ) {
+				this.rescued();
+			} else {
+			//for(var i=0; i<numPixels; i++) {				
+				percent = (1/this.fly_maxframe) * this.fly_frame;
+				var pos = getBezier(percent, this.C1, this.C2, this.C3, this.C4);
+				//objPixels[i].moveTo(pos.x, pos.y);
+				this.update( pos );
 			}
 		}
 	},
@@ -454,6 +495,10 @@ var Hime = $.inherit( LevelObj, {
 		ctx.fillStyle = "#000";
 		ctx.font = 'arial 10px';
 		//ctx.fillText( "x:"+this.x+" y:"+this.y+" frame:"+this.frame, Math.floor(this.x)+4, Math.floor(this.y) );
+		if( debug_mode ) {
+			this.game.circle( ctx, this.C2, 2 );
+			this.game.circle( ctx, this.C3, 5 );
+		}
 	}
 });
 
@@ -721,6 +766,10 @@ var HSGame = $.inherit( LSGame, {
 		//debug( this.gun );
 		if( this.gun )
 			this.gun.render( ctx );
+		if( debug_mode ) {
+		}
+		/*
+		*/
 		this.__base( ctx );
 	},
 	drawScreen : function() {

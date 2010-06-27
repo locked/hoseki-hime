@@ -6,8 +6,8 @@
 
 
 {% block "content" %}
+<h2>HOSEKI HIME - Full html5 game</h2>
 {% ifequal gamemode 'editor' %}
-  <br>
   <input type="button" value="save" onclick="saveLevel()">
 {% endifequal %}
 <div id="hs_main" width="800" height="600">
@@ -24,7 +24,11 @@
 </div>
 <div id="hs_scores">
   <h2>High Scores</h2>
+  {% if user.is_authenticated %}
   <p>Profile: {{ fbp.first_name }}</p>
+  {% else %}
+  Login with facebook to save your scores.
+  {% endif %}
   <div id="hs_scores_inner">
   </div>
 </div>
@@ -78,4 +82,11 @@ $(document).ready( function() {
   <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/jquery.inherit.js"></script>
   <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/libhtml5.js"></script>
   <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/game.js"></script>
+  <script type="text/javascript">
+  {% if user.is_authenticated %}
+  {% ifequal user.id 1 %}
+  debug_mode = true;
+  {% endifequal %}
+  {% endif %}
+  </script>
 {% endblock %}
