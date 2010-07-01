@@ -8,7 +8,7 @@ urlpatterns = patterns('',
     (r'^level/(?P<level>[0-9]*)/(?P<action>[a-z]*)$', 'himesama.views.level'),
     (r'^score/(?P<score>[0-9]*)/(?P<level>[0-9]*)$', 'himesama.views.score'),
     (r'^scores$', 'himesama.views.scores'),
-    (r'^game/(?P<level>[0-9]*)$', 'himesama.views.game'),
     (r'^game[/]*$', 'himesama.views.game'),
+    (r'^game/(?P<level>[0-9]*)$', 'himesama.views.game'),
     (r'^', 'himesama.views.menu'),
 )

@@ -31,14 +31,14 @@ var Point = $.inherit({
 		this.y = y;
 	},
 
-	role: function(){
+	role : function(){
 		return "point";
 	},
 
-	doAnim: function(){
+	doAnim : function(){
 	},
 
-	render: function( ctx ){
+	render : function( ctx ){
 		ctx.beginPath();
 		ctx.lineWidth = 1;
 		ctx.lineCap = 'square';
@@ -72,10 +72,13 @@ var Obj = $.inherit( Point, {
 		//this.drawy = Math.round( this.y-this.hh+this.game.origin.y );
 	},
 	update : function( p ){
-		this.x = p.x;
-		this.y = p.y;
+		//this.x = Math.round(this.x);
+		//this.y = Math.round(this.y);
+		this.x = Math.round(p.x);
+		this.y = Math.round(p.y);
 		this.drawx = Math.round( this.x-this.wh+this.game.origin.x );
 		this.drawy = Math.round( this.y-this.hh+this.game.origin.y );
+		this.ind = this.game.getIndex( new Point( this.x, this.y ) );
 	},
 	role : function(){
 		return "obj";
@@ -86,19 +89,20 @@ var Obj = $.inherit( Point, {
 		ctx.drawImage( this.img, this.drawx, this.drawy, this.w, this.h );
 		if( this.ind && debug_mode ) {
 			ctx.fillStyle = "#fff";
-			ctx.font = 'arial 5px';
-			ctx.fillText( this.ind, Math.floor(this.x-this.w/2)+4+game.origin.x, Math.floor(this.y-this.h/2)+10+game.origin.y );
-			ctx.fillText( this.obj_id, Math.floor(this.x-this.w/2)+4+game.origin.x, Math.floor(this.y-this.h/2)+18+game.origin.y );
+			ctx.font = '9px arial';
+			ctx.fillText( this.ind, Math.floor(this.x-this.w/2)+8+game.origin.x, Math.floor(this.y-this.h/2)+10+game.origin.y );
+			//ctx.fillText( this.obj_id, Math.floor(this.x-this.w/2)+8+game.origin.x, Math.floor(this.y-this.h/2)+18+game.origin.y );
+			ctx.fillText( this.x, Math.floor(this.x-this.w/2)+8+game.origin.x, Math.floor(this.y-this.h/2)+18+game.origin.y );
 		}
 	}
 });
 
 var Cursor = $.inherit( Point, {
-	__constructor: function( game ) {
+	__constructor : function( game ) {
 		this.attached_obj = null;
 		this.game = game;
 	},
-	doAnim: function() {
+	doAnim : function() {
 		this.x = this.game.mouse.x - this.game.origin.x;
 		this.y = this.game.mouse.y - this.game.origin.y;
 		if( this.attached_obj ) {

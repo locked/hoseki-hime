@@ -107,7 +107,7 @@ var Gun = $.inherit( Obj, {
 			angle = (getAngle( p, o.game.cursor ) + Math.PI/2);
 		else
 			angle = (getAngle( p, o.game.cursor ) - Math.PI/2);
-		var speed = 13;
+		var speed = 11;
 		var decy = getAdjacent( angle, speed );
 		var decx = getOppose( angle, speed );
 		var v = new Point( decx, -decy );
@@ -253,8 +253,8 @@ var LevelObj = $.inherit( Obj, {
 		if( this.ind<this.game.max_coins+this.game.x_coins ) c.push( [this.ind+this.game.x_coins+coef, lvl[this.ind+this.game.x_coins+coef]] );
 		/*
 		for( i in c )
-		  if( c[i] )
-			 this.game.debug( "ind: "+this.ind+" neighbour:"+c[i][0] );
+		    if( c[i] )
+		        debug( "ind: "+this.ind+" neighbour:"+c[i][0] );
 		*/
 		return c;
 	},
@@ -287,7 +287,7 @@ var AnimatedObj = $.inherit( LevelObj, {
 		this.lastt = new Date();
 	},
 	doAnim : function() {
-		var frametime = ((new Date()).getTime()-this.lastt)/40;
+		var frametime = ((new Date()).getTime()-this.lastt)/45;
 		this.lastt = new Date();
 		if( !(frametime>1 && frametime<80) )
 			frametime = 0.1;
@@ -538,6 +538,7 @@ var CoinObj = $.inherit( LevelObj, {
 			this.lastind = this.ind;
 			// 2 position behind due to miscalculations
 			this.ind = this.game.getIndex( new Point( this.x-this.v.x*2, this.y-this.v.y*2 ) );
+			//this.ind = this.game.getIndex( new Point( this.x, this.y ) );
 			this.checkCollisions();
 			// Set real current index
 			this.ind = this.game.getIndex( this );
@@ -615,7 +616,7 @@ var CoinObj = $.inherit( LevelObj, {
 			ctx.lineTo(locx-0.5, locy+0.5);
 			ctx.lineTo(locx-0.5, locy-0.5);
 			*/
-			var alphas = ['0.1','0.2','0.4','0.7','1'];
+			var alphas = ['0.2','0.4','0.7','1'];
 			for( i in alphas ) {
 				ctx.beginPath();
 				var alpha = alphas[i];
@@ -643,16 +644,24 @@ var CoinObj = $.inherit( LevelObj, {
 	destroyNeighbour : function( depth ) {
 		var i = 0;
 		var c = this.getNeighbour();
-		//this.game.delObj( this );
-		this.suicide( depth*100 );
+		var todo = new Array();
+		//this.suicide( depth*100 );
 		for( i in c ) {
 			var lvl = this.game.getLevel();
 			var elem = lvl[c[i][0]];
 			if( c[i] && elem ) {
 				if( elem.color==this.color ) {
-					elem.destroyNeighbour( depth+1 );
+					//elem.destroyNeighbour( depth+1 );
+					var ne = this.game.createObjFromType( elem.type, 'id', elem.ind );
+					todo.push( ne );
+					//debug( "type:"+ne.type+" ind:"+ne.ind+" len:"+todo.length );
+					elem.suicide( depth*100 );
 				}
 			}
+		}
+		for( i in todo ) {
+			//debug( "destroyNeighbour(i): "+todo[i].ind );
+			todo[i].destroyNeighbour( depth+1 );
 		}
 		this.game.scoreUp( 10 );
 	},
@@ -709,6 +718,8 @@ var HSGame = $.inherit( LSGame, {
 		this.levels = {};
 		this.gamemode = gamemode;
 		this.coin_w = 25;
+		this.coin_w_coef = 0.75;	// 75:OK
+		this.coin_w_coef_ = 1.335;
 		this.coin_h = 23;
 		this.x_coins = x_coins; //Math.floor(580/(this.coin_w*1.25));
 		this.y_coins = y_coins; //Math.floor(630/(this.coin_h));
@@ -767,6 +778,23 @@ var HSGame = $.inherit( LSGame, {
 		if( this.gun )
 			this.gun.render( ctx );
 		if( debug_mode ) {
+			var x;
+			var d = this.coin_w_coef*this.coin_w;
+			for( x=this.origin.x; x<800; x+=d ) {
+				ctx.beginPath();
+				ctx.strokeStyle = "#fff";
+				ctx.moveTo(x, 10);
+				ctx.lineTo(x, 630);
+				ctx.stroke();
+			}
+			var d = this.coin_w / this.coin_w_coef_;
+			for( x=this.origin.x; x<800; x+=d ) {
+				ctx.strokeStyle = "#000";
+				ctx.beginPath();
+				ctx.moveTo(x, 10);
+				ctx.lineTo(x, 630);
+				ctx.stroke();
+			}
 		}
 		/*
 		*/
@@ -909,14 +937,33 @@ var HSGame = $.inherit( LSGame, {
 	getIndex : function( o ) {
 		// Return level index from Point
 		p = new Point( o.x, o.y );
-		p.x -= this.coin_w/4;
-		p.y -= this.coin_h/2;
-		//var yind = Math.floor( p.y/(this.coin_h*0.48) );
+		p.x -= Math.round(this.coin_w/2);
+		p.y -= Math.round(this.coin_h/2);
 		var yind = Math.round( p.y/(this.coin_h*0.5) );
 		if( yind%2==1 ) coef = 0;
 		else coef = 1;
-		var xind = Math.round( (p.x-coef*(this.coin_w*0.65))/(this.coin_w*1.5) );
+		//var xind = Math.round( (p.x-coef*(this.coin_w*0.65))/(this.coin_w*1.5) );
+		var xind = Math.round( (p.x-coef*(this.coin_w*this.coin_w_coef))/(this.coin_w*1.5) );
 		var id = yind*this.x_coins + xind;
+		/*
+		*/
+		// Calculations based on X index
+		/*
+		var c = this.coin_w_coef;
+		var bxind = Math.round( (p.x*this.coin_w_coef_)/this.coin_w );
+		if( bxind%2==1 ) {
+			var yind = Math.round( (p.y) / (this.coin_h) )*2;
+			//var yind = Math.round( (p.y*2) / (this.coin_h) );
+			var xind = Math.round( (p.x*c-(this.coin_w*c)) / this.coin_w );
+		} else {
+			var yind = Math.round( (((p.y-(this.coin_h*0.5)))) / (this.coin_h) )*2;
+			//var yind = Math.round( (((p.y)-(this.coin_h*0.5))) / (this.coin_h) )*2;
+			//var yind = Math.round( (((p.y*2)-(this.coin_h*0.5))) / (this.coin_h) );
+			var xind = Math.round( (p.x*c) / this.coin_w ) + this.x_coins;
+		}
+			var id = yind*this.x_coins + xind;
+		debug( ["x:"+p.x+" y:"+p.y, "xind:"+xind+" yind:"+yind, "bxind:"+bxind+":"+bxind%2, id], true );
+		*/
 		//this.debug( "x:"+Math.floor(p.x)+"y:"+Math.floor(p.y)+" xi:"+xind+"yi:"+yind+"co:"+coef+" id:"+id );
 		return id;
 	},
@@ -926,9 +973,11 @@ var HSGame = $.inherit( LSGame, {
 		var y = Math.floor( id/this.x_coins ) * (this.coin_h*0.5);
 		if( Math.floor( id/this.x_coins )%2==1 ) coef = 0;
 		else coef = 1;
-		var x = (id-yind)*(this.coin_w*1.5)+coef*(this.coin_w*0.75);
+		//var x = (id-yind)*(this.coin_w*1.5)+coef*(this.coin_w*0.75);
+		var x = (id-yind)*(this.coin_w*1.5)+coef*(this.coin_w*this.coin_w_coef);
 		//this.debug( "t:"+t+"x: "+x+"y: "+y+"yi:"+yind+"id:"+id );
-		x += Math.round( this.coin_w/3 );
+		//x += Math.round( this.coin_w/3 );
+		x += Math.round( this.coin_w/2 );
 		y += Math.round( this.coin_h/2 );
 		return new Point( x, y );
 	},
@@ -971,7 +1020,7 @@ var HSGame = $.inherit( LSGame, {
 		//var c = this.game.createObjFromType( color, 'pos', p );
 		var c = this.createObjFromType( obj.type, 'pos', p );
 		c.doAnim = function() {
-			this.ind = game.getIndex( this );
+			//this.ind = game.getIndex( this );
 			var p = game.getPosition( this.ind );
 			this.update( p );
 		}

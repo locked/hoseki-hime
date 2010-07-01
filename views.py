@@ -116,8 +116,10 @@ def game(request, level=None):
         s = Score( score=0, level=0 )
     game_globals['score'] = s
     game_level = s.level
-    if level is not None or game_level is None:
+    if level is not None:
         game_level = int(level)
+    if game_level is None or game_level=='':
+        game_level = 0
     game_globals['level'] = game_level
     return render_to_response(template, game_globals, context_instance=RequestContext(request))
 
