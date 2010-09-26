@@ -74,8 +74,10 @@ var Obj = $.inherit( Point, {
 	update : function( p ){
 		//this.x = Math.round(this.x);
 		//this.y = Math.round(this.y);
-		this.x = Math.round(p.x);
-		this.y = Math.round(p.y);
+		//this.x = Math.round(p.x);
+		//this.y = Math.round(p.y);
+		this.x = p.x;
+		this.y = p.y;
 		this.drawx = Math.round( this.x-this.wh+this.game.origin.x );
 		this.drawy = Math.round( this.y-this.hh+this.game.origin.y );
 		this.ind = this.game.getIndex( new Point( this.x, this.y ) );
@@ -86,7 +88,11 @@ var Obj = $.inherit( Point, {
 	render : function( ctx ) {
 		//ctx.drawImage( this.img, Math.round(this.x-Math.round(this.w/2))+game.origin.x, Math.floor(this.y-this.h/2)+game.origin.y, this.w, this.h );
 		//ctx.drawImage( this.img, Math.round( this.x-this.wh+this.game.origin.x ), Math.round( this.y-this.hh+this.game.origin.y ), this.w, this.h );
-		ctx.drawImage( this.img, this.drawx, this.drawy, this.w, this.h );
+		try {
+			ctx.drawImage( this.img, this.drawx, this.drawy, this.w, this.h );
+		} catch (e) {
+			return false;
+		}
 		if( this.ind && debug_mode ) {
 			ctx.fillStyle = "#fff";
 			ctx.font = '9px arial';
@@ -163,6 +169,10 @@ var LSGame = $.inherit({
 		this.audios = [];
 		this.loadedAudioElements = 0;
 		this.toloadAudioElements = 0;
+		
+		this.level_time_max = 240;
+		// You need to set that whe nyou start a level
+		this.level_time = (new Date).getTime();
 
 		this.canvas_element = $('#'+canvas);
 		this.canvas_element.bind( "mousemove", {o:this}, this.mousemove );
@@ -216,6 +226,10 @@ var LSGame = $.inherit({
 	drawAfter : function( ctx ) {
 	},
 	drawBefore : function( ctx ) {
+		// Detect end of game
+		if( ((new Date).getTime())-this.level_time > this.level_time_max*1000 ) {
+			this.loose();
+		}
 		// Draw scores, lives, etc...
 		ctx.fillStyle = "#fff";
 		ctx.font = '14px Arial';
@@ -383,18 +397,22 @@ var LSGame = $.inherit({
 	playSound : function( audioname ) {
 	},
 	preloadSound : function( audioname ) {
-		var ii;
-		for( ii in this.audios )
-			if( this.audios[ii][0]==audioname )
-				break;
-		if( this.audios[ii] && this.audios[ii][0]==audioname ) {
-			var audioElement = this.audios[ii][1];
-			//debug( "LOAD SOUND [CACHED]: "+src );
-		} else {
-			var audioElement = new Audio();
-			//debug( "LOAD SOUND: "+src );
-			this.audios.push( [audioname,audioElement] );
-			//this.audios_index[
+		try {
+			var ii;
+			for( ii in this.audios )
+				if( this.audios[ii][0]==audioname )
+					break;
+			if( this.audios[ii] && this.audios[ii][0]==audioname ) {
+				var audioElement = this.audios[ii][1];
+				//debug( "LOAD SOUND [CACHED]: "+src );
+			} else {
+				var audioElement = new Audio();
+				//debug( "LOAD SOUND: "+src );
+				this.audios.push( [audioname,audioElement] );
+				//this.audios_index[
+			}
+		} catch (e) {
+			return null;
 		}
 		return audioElement;
 	}

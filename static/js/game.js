@@ -117,12 +117,16 @@ var Gun = $.inherit( Obj, {
 		//debug( "state: "+snds['fire'].ended );
 		//$(snds['fire']).attr('loop',true);
 		//snds['fire'].currentTime = 0.00001;
-		if( snds['fire'].currentTime==0 || snds['fire'].currentTime==snds['fire'].duration ) {
-			snds['fire'].play();
-			//debug("fire ONE");
-		} else {
-			snds['fire2'].play();
-			//debug("fire TWO");
+		try {
+			if( snds['fire'].currentTime==0 || snds['fire'].currentTime==snds['fire'].duration ) {
+				snds['fire'].play();
+				//debug("fire ONE");
+			} else {
+				snds['fire2'].play();
+				//debug("fire TWO");
+			}
+		} catch (e) {
+			// No sound ?
 		}
 		
 		o.newCoin();
@@ -160,11 +164,13 @@ var Gun = $.inherit( Obj, {
 		//game.debug( "angle:" + this.angle.toPrecision(2) + " angle raw:"+ getAngle( this, p2 ).toPrecision(2) );
 	},
 	render : function( ctx ){
-		ctx.translate( this.x+this.game.origin.x, this.y+this.game.origin.y );
-		ctx.rotate( this.angle );
-		ctx.drawImage( this.img, -this.wh, -(this.h-40) );
-		ctx.rotate( -this.angle );
-		ctx.translate( -this.x-this.game.origin.x, -this.y-this.game.origin.y );
+		try {
+			ctx.translate( this.x+this.game.origin.x, this.y+this.game.origin.y );
+			ctx.rotate( this.angle );
+			ctx.drawImage( this.img, -this.wh, -(this.h-40) );
+			ctx.rotate( -this.angle );
+			ctx.translate( -this.x-this.game.origin.x, -this.y-this.game.origin.y );
+		} catch(e) {}
 	},
 	role : function(){
 		return "gun";
@@ -297,7 +303,11 @@ var AnimatedObj = $.inherit( LevelObj, {
 			this.frame = 0;
 	},
 	render : function( ctx ) {
-		ctx.drawImage( this.img,  Math.floor(this.frame)*this.w, 0, this.w, this.h, this.drawx, this.drawy, this.w, this.h );
+		try {
+			ctx.drawImage( this.img,  Math.floor(this.frame)*this.w, 0, this.w, this.h, this.drawx, this.drawy, this.w, this.h );
+		} catch (e) {
+			debug("ERR: frame:"+this.frame+" imgname:"+this.img_name);
+		}
 	}
 });
 
@@ -305,7 +315,7 @@ var AnimatedObj = $.inherit( LevelObj, {
 // Breakable stone
 var Breakable = $.inherit( AnimatedObj, {
 	__constructor : function( game, p ){
-		this.__base( game, p, "breakable.png", 5 );
+		this.__base( game, p, "breakable.png", 4 );
 	},
 	collide : function( color ) {
 		this.game.delObj( this );
@@ -318,7 +328,7 @@ var Unbreakable = $.inherit( AnimatedObj, {
 	__constructor : function( game, p ){
 		this.w = 25;
 		this.h = 23;
-		this.__base( game, p, "wall.png", 5 );
+		this.__base( game, p, "wall.png", 0 );
 	},
 	collide : function( color ) {
 		this.addNewNeighbour( 3, color );
@@ -355,7 +365,7 @@ var Scatter = $.inherit( AnimatedObj, {
 	__constructor : function( game, p ){
 		this.w = 25;
 		this.h = 23;
-		this.__base( game, p, "white_stone.png", 5 );
+		this.__base( game, p, "white_stone.png", 4 );
 	},
 	collide: function( color ) {
 		this.convert( color );
@@ -385,8 +395,8 @@ var Scatter = $.inherit( AnimatedObj, {
 var Bomb = $.inherit( AnimatedObj, {
 	__constructor : function( game, p ){
 		this.w = 41;
-		this.h = 34;
-		this.__base( game, p, "bomb.png", 5 );
+		this.h = 33;
+		this.__base( game, p, "bomb.png", 4 );
 	},
 	collide : function( color ) {
 		this.game.delObj( this );
@@ -396,7 +406,9 @@ var Bomb = $.inherit( AnimatedObj, {
 				c[i][1].explode();
 			}
 		}
-		snds['xplosionbig'].play();
+		try {
+			snds['xplosionbig'].play();
+		} catch (e) { }
 	}
 });
 
@@ -406,7 +418,7 @@ var Gold = $.inherit( AnimatedObj, {
 	__constructor : function( game, p ){
 		this.w = 23;
 		this.h = 23;
-		this.__base( game, p, "coin.png", 28 );
+		this.__base( game, p, "coin.png", 26 );
 	},
 	collide : function( color ) {
 		this.game.scoreUp( 500 );
@@ -537,7 +549,8 @@ var CoinObj = $.inherit( LevelObj, {
 			this.update( this );
 			this.lastind = this.ind;
 			// 2 position behind due to miscalculations
-			this.ind = this.game.getIndex( new Point( this.x-this.v.x*2, this.y-this.v.y*2 ) );
+			//this.ind = this.game.getIndex( new Point( this.x-this.v.x*2, this.y-this.v.y*2 ) );
+			this.ind = this.game.getIndex( new Point( this.x-this.v.x, this.y-this.v.y ) );
 			//this.ind = this.game.getIndex( new Point( this.x, this.y ) );
 			this.checkCollisions();
 			// Set real current index
@@ -717,6 +730,8 @@ var HSGame = $.inherit( LSGame, {
 		// Globals
 		this.levels = {};
 		this.gamemode = gamemode;
+		this.origin = new Point( 152, 10 );
+		this.board = new Point( 634, 560 );
 		this.coin_w = 25;
 		this.coin_w_coef = 0.75;	// 75:OK
 		this.coin_w_coef_ = 1.335;
@@ -778,6 +793,7 @@ var HSGame = $.inherit( LSGame, {
 		if( this.gun )
 			this.gun.render( ctx );
 		if( debug_mode ) {
+			/*
 			var x;
 			var d = this.coin_w_coef*this.coin_w;
 			for( x=this.origin.x; x<800; x+=d ) {
@@ -795,9 +811,34 @@ var HSGame = $.inherit( LSGame, {
 				ctx.lineTo(x, 630);
 				ctx.stroke();
 			}
+			*/
 		}
-		/*
-		*/
+		ctx.strokeStyle = "#000";
+		ctx.beginPath();
+		var a = new Point( this.origin.x, this.origin.y+this.board.y );
+		var b = new Point( this.origin.x+this.board.x, this.origin.y+this.board.y+20 );
+		ctx.moveTo(a.x, a.y);
+		ctx.lineTo(b.x, a.y);
+		ctx.lineTo(b.x, b.y);
+		ctx.lineTo(a.x, b.y);
+		ctx.lineTo(a.x, a.y);
+		ctx.stroke();
+		
+		if( this.state=="play" ) {
+			ctx.fillStyle = "#881100";
+			ctx.beginPath();
+			var pad = 3;
+			var a = new Point( this.origin.x+pad, this.origin.y+this.board.y+pad );
+			ctx.moveTo(a.x, a.y);
+			var dec = Math.round((((new Date()).getTime()-this.level_time)/(this.level_time_max*1000))*(this.board.x-pad*2))
+			//debug( dec );
+			var b = new Point( this.origin.x+pad+dec, this.origin.y+this.board.y+(20-pad) );
+			ctx.lineTo(b.x, a.y);
+			ctx.lineTo(b.x, b.y);
+			ctx.lineTo(a.x, b.y);
+			ctx.lineTo(a.x, a.y);
+			ctx.fill();
+		}
 		this.__base( ctx );
 	},
 	drawScreen : function() {
@@ -902,6 +943,7 @@ var HSGame = $.inherit( LSGame, {
 			level.push( c );
 		}
 		this.setLevel( level );
+		this.level_time = (new Date).getTime();
 		this.state = "play";
 	},
 	
@@ -909,11 +951,13 @@ var HSGame = $.inherit( LSGame, {
 	setLevel : function( lvl ) { this.level = lvl; },
 	
 	addObj : function( obj, update_level ) {
+		/*
 		if( obj.role=="coin" && obj.ind>this.max_coins-this.x_coins*2 ) {
 			// If too low, loose
 			this.loose();
 			return false;
 		}
+		*/
 		// Set the level index of this object here
 		obj.ind = this.getIndex( obj );
 		if( obj.ind>=0 && update_level ) {

@@ -11,7 +11,7 @@ from facebookconnect.models import FacebookProfile
 from himesama.models import Score
 
 cur_path = sys.path[0]
-level_filename = cur_path+"/r5/himesama"+"/world.levels"
+level_filename = cur_path+"/himesama"+"/world.levels"
 x_coins = 17
 y_coins = 35
 game_globals = { 'level': 0, 'x_coins': x_coins, 'y_coins': y_coins }

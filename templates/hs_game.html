@@ -77,6 +77,10 @@ $(document).ready( function() {
 	game.preloadImage( "eraser.png" );
 	game.init();
 	game.loadLevel();
+	var template_data = "TEST";
+	var template_bundle_id = 1;
+	var callback = function() { alert( "done" ); };
+	//feedTheFacebook( template_data, template_bundle_id, callback );
 } );
   </script>
   <script type="text/javascript" src="{{ MEDIA_URL }}himesama/js/jquery.inherit.js"></script>
